@@ -1,0 +1,12 @@
+# Repositories
+from app.repositories.base_repository import CRUDBase
+from app.repositories.user_repository import user_repo
+from app.repositories.device_repository import device_repo, cylinder_repo
+from app.repositories.telemetry_repository import gas_reading_repo, weight_reading_repo, leak_event_repo
+from app.repositories.cooking_repository import dish_repo, cooking_history_repo
+from app.repositories.efficiency_repository import efficiency_score_repo, usage_analytics_repo
+from app.repositories.notification_repository import notification_repo
+from app.repositories.booking_repository import booking_repo
+from app.repositories.recommendation_repository import recommendation_repo
+from app.repositories.refill_repository import refill_prediction_repo
+from app.repositories.system_log_repository import system_log_repo

@@ -1,0 +1,200 @@
+import logging
+from typing import List, Optional
+from datetime import datetime, timezone
+
+from sqlalchemy.orm import Session
+
+from app.repositories.telemetry_repository import (
+    gas_reading_repo,
+    weight_reading_repo,
+    leak_event_repo,
+)
+from app.schemas.telemetry import (
+    GasReadingCreate,
+    WeightReadingCreate,
+    LeakEventCreate,
+    LeakEventUpdate,
+)
+from app.models.gas_reading import GasReading
+from app.models.weight_reading import WeightReading
+from app.models.leak_event import LeakEvent
+from app.models.device import Device
+from app.services.notification_service import notification_service
+from app.services.system_log_service import system_log_service
+
+logger = logging.getLogger(__name__)
+
+# ── Gas-level thresholds (LPG standard, in PPM) ──────────────────────────
+PPM_WARNING_THRESHOLD = 500     # elevated — could be stove residual
+PPM_CRITICAL_THRESHOLD = 1000   # dangerous — likely leak
+
+
+class TelemetryService:
+
+    # ==================================================================
+    # HELPER — resolve device → user
+    # ==================================================================
+    def _get_device_owner_id(self, db: Session, device_id: str) -> Optional[int]:
+        """Look up the user_id that owns a device. Returns None if orphaned."""
+        device = db.query(Device).filter(Device.id == device_id).first()
+        if device and device.user_id:
+            return device.user_id
+        return None
+
+    # ==================================================================
+    # GAS READINGS  (with automatic leak detection)
+    # ==================================================================
+    def record_gas_reading(
+        self, db: Session, reading_in: GasReadingCreate
+    ) -> GasReading:
+        """
+        Ingest a gas sensor reading and run threshold-based safety checks.
+
+        Thresholds (LPG industry standard):
+          < 500 PPM  → normal
+          500–999     → warning  (notify user)
+          ≥ 1000      → critical (auto-create LeakEvent + emergency alert)
+        """
+        ppm = reading_in.ppm_value
+
+        # ── Classify ──────────────────────────────────────────────────
+        if ppm >= PPM_CRITICAL_THRESHOLD:
+            reading_in.status = "critical"
+        elif ppm >= PPM_WARNING_THRESHOLD:
+            reading_in.status = "warning"
+        else:
+            reading_in.status = "normal"
+
+        # ── Persist reading ───────────────────────────────────────────
+        saved_reading = gas_reading_repo.create(db, obj_in=reading_in)
+
+        # ── React to elevated levels ──────────────────────────────────
+        if reading_in.status == "critical":
+            logger.critical(
+                "CRITICAL gas reading — device=%s  ppm=%.1f",
+                reading_in.device_id, ppm,
+            )
+            self._handle_critical_gas(db, reading_in.device_id, ppm)
+
+        elif reading_in.status == "warning":
+            logger.warning(
+                "WARNING gas reading — device=%s  ppm=%.1f",
+                reading_in.device_id, ppm,
+            )
+            self._handle_warning_gas(db, reading_in.device_id, ppm)
+
+        return saved_reading
+
+    # ── Critical gas handler ──────────────────────────────────────────
+    def _handle_critical_gas(
+        self, db: Session, device_id: str, ppm: float
+    ) -> None:
+        """Auto-create a LeakEvent and fire an emergency notification."""
+
+        # 1) Create a LeakEvent
+        leak_in = LeakEventCreate(
+            device_id=device_id,
+            start_time=datetime.now(timezone.utc),
+            peak_ppm=ppm,
+            auto_shutoff_triggered=True,
+            false_alarm=False,
+        )
+        self.record_leak_event(db, event_in=leak_in)
+
+        # 2) Write system log
+        system_log_service.log(
+            db,
+            device_id=device_id,
+            log_level="CRITICAL",
+            message=f"Auto-created leak event — PPM {ppm:.0f} exceeded critical threshold {PPM_CRITICAL_THRESHOLD}",
+        )
+
+    # ── Warning gas handler ───────────────────────────────────────────
+    def _handle_warning_gas(
+        self, db: Session, device_id: str, ppm: float
+    ) -> None:
+        """Send a warning notification to the device owner."""
+        user_id = self._get_device_owner_id(db, device_id)
+        if user_id:
+            notification_service.send_safety_warning(
+                db,
+                user_id=user_id,
+                device_id=device_id,
+                ppm_value=ppm,
+            )
+        system_log_service.log(
+            db,
+            device_id=device_id,
+            log_level="WARNING",
+            message=f"Gas warning — PPM {ppm:.0f} exceeded warning threshold {PPM_WARNING_THRESHOLD}",
+        )
+
+    def get_recent_gas_readings(
+        self, db: Session, device_id: str, limit: int = 100
+    ) -> List[GasReading]:
+        return gas_reading_repo.get_latest_for_device(
+            db, device_id=device_id, limit=limit
+        )
+
+    # ==================================================================
+    # WEIGHT READINGS
+    # ==================================================================
+    def record_weight_reading(
+        self, db: Session, reading_in: WeightReadingCreate
+    ) -> WeightReading:
+        return weight_reading_repo.create(db, obj_in=reading_in)
+
+    def get_recent_weight_readings(
+        self, db: Session, device_id: str, limit: int = 100
+    ) -> List[WeightReading]:
+        return weight_reading_repo.get_latest_for_device(
+            db, device_id=device_id, limit=limit
+        )
+
+    # ==================================================================
+    # LEAK EVENTS
+    # ==================================================================
+    def record_leak_event(
+        self, db: Session, event_in: LeakEventCreate
+    ) -> LeakEvent:
+        """Save a leak event AND fire an emergency notification to the device owner."""
+        leak = leak_event_repo.create(db, obj_in=event_in)
+
+        # ── Notify device owner ───────────────────────────────────────
+        user_id = self._get_device_owner_id(db, event_in.device_id)
+        if user_id:
+            notification_service.send_emergency_alert(
+                db,
+                user_id=user_id,
+                device_id=event_in.device_id,
+                ppm_value=event_in.peak_ppm,
+            )
+        else:
+            logger.warning(
+                "Leak event recorded for device %s but no owner found — cannot notify.",
+                event_in.device_id,
+            )
+
+        return leak
+
+    def resolve_leak_event(
+        self, db: Session, event_id: int
+    ) -> Optional[LeakEvent]:
+        event = leak_event_repo.get(db, id=event_id)
+        if event:
+            return leak_event_repo.update(
+                db,
+                db_obj=event,
+                obj_in=LeakEventUpdate(end_time=datetime.now(timezone.utc)),
+            )
+        return None
+
+    def get_unresolved_leaks(
+        self, db: Session, device_id: str
+    ) -> List[LeakEvent]:
+        return leak_event_repo.get_unresolved_for_device(
+            db, device_id=device_id
+        )
+
+
+telemetry_service = TelemetryService()

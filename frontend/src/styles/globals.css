@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* Tell Tailwind v4 to use class-based dark mode (matches ThemeContext toggle) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #16a34a;
+  --color-primary-dark: #15803d;
+  --color-primary-light: #bbf7d0;
+  --color-danger: #dc2626;
+  --color-warning: #f59e0b;
+  --color-info: #2563eb;
+  --color-background: #f8fafc;
+  --color-background-dark: #020617;
+}
+
+body {
+  background-color: var(--color-background);
+  color: #0f172a;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  background-color: var(--color-background-dark);
+  color: #f8fafc;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
