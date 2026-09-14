@@ -1,9 +1,11 @@
 from typing import List, Optional
 import os
+import logging
 
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.repositories.cooking_repository import (
     dish_repo,
     cooking_history_repo,
@@ -21,6 +23,7 @@ from app.models.cooking_history import CookingHistory
 
 # Load variables from .env
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 class CookingService:
@@ -130,152 +133,116 @@ class CookingService:
         self,
         message: str
     ) -> str:
+        """
+        Generates an AI response for kitchen and cooking queries using Google Gemini API.
+        Uses settings.GEMINI_API_KEY loaded securely from the backend environment.
+        """
+        if not message or not message.strip():
+            return "Please enter a valid question or cooking query."
 
-        api_key = os.getenv("GEMINI_API_KEY")
-
-        # --------------------------------------------------------
-        # Check whether API key was loaded
-        # --------------------------------------------------------
+        # Read API key from settings or environment
+        api_key = settings.GEMINI_API_KEY or os.getenv("GEMINI_API_KEY")
 
         if not api_key:
-
-            print("======================================")
-            print("GEMINI ERROR")
-            print("GEMINI_API_KEY was not found.")
-            print("======================================")
-
+            logger.warning("Gemini API key missing in settings")
             return (
                 "Gemini API key is not configured. "
-                "Please check your .env file."
+                "Please check your backend .env file."
             )
-
-
-        print("======================================")
-        print("GEMINI API")
-        print("API key detected:", api_key[:6] + "..." + api_key[-4:])
-        print("User message:", message)
-        print("======================================")
-
-
-        # --------------------------------------------------------
-        # Call Gemini
-        # --------------------------------------------------------
 
         try:
-
             from google import genai
-            from google.genai import types as genai_types
 
-            client = genai.Client(
-                api_key=api_key,
-                http_options=genai_types.HttpOptions(timeout=30000),
-            )
+            client = genai.Client(api_key=api_key)
 
-            prompt = f"""
-You are SafeGas AI Cooking Assistant.
+            prompt = f"""You are SafeGas AI Cooking Assistant.
+
+LPG SAFETY HAS PRIORITY OVER COOKING ADVICE.
 
 Your job is to help Indian households with:
+- LPG gas consumption estimates
+- Indian cooking recipes and techniques
+- Cooking time and burner flame adjustment tips
+- Gas saving techniques and energy efficiency
+- Kitchen safety & LPG cylinder care
 
-- LPG gas consumption
-- Indian cooking
-- Cooking time estimates
-- Gas saving techniques
-- LPG efficiency
-- Refill recommendations
-- Kitchen safety
+Safety Rules:
+1. Never recommend testing an LPG leak using matches, lighters, candles, incense sticks, any open flame, or any other ignition source.
+2. If a user suspects an LPG leak or smells LPG:
+   - Do not create flames, sparks, or operate electrical switches.
+   - Advise them to move away from the suspected leak and evacuate to a safe/open area.
+   - Instruct them to contact the appropriate LPG emergency service or qualified gas technician.
+   - Only mention shutting off the LPG supply if it is immediately safe to do so without approaching the leak.
+3. Do NOT provide DIY instructions for repairing LPG regulators, cylinders, valves, gas hoses, modifying gas connections, or bypassing safety devices.
+4. Do NOT provide step‑by‑step DIY leak inspection procedures when an active or suspected LPG leak is reported.
+5. Do NOT recommend the user approach, touch, disconnect, reconnect, tighten, loosen, or repair a gas connection when an active leak is suspected.
+6. For abnormal yellow/orange flames:
+   - Do not tell the user to poke burner holes with pins, wires, needles, or other sharp/metal objects.
+   - Recommend turning off the appliance when safe and contacting a qualified technician if the flame persists.
+7. Avoid unsupported precise claims such as "75% less fuel", "10–15% savings", "40% faster" unless the user explicitly asks for a sourced comparison.
+8. Do not invent statistics, emergency numbers, technical specifications, or safety procedures.
+9. For emergency situations, keep the response concise and action‑oriented rather than providing lengthy cooking advice.
+10. Never claim that an LPG connection is definitely safe based only on information provided in chat.
+11. If the user's question is unrelated to cooking, LPG, kitchen safety, gas usage, or the SafeGas system, politely state that you are designed to assist with SafeGas‑related topics.
 
-Give practical and concise answers.
+Provide practical, clear, and concise answers.
 
 User message:
-{message}
+{message.strip()}
 """
 
-            # Try gemini-2.5-flash first, fall back to gemini-1.5-flash
-            for model_name in ["gemini-2.5-flash", "gemini-1.5-flash"]:
+            # Priority list of models
+            candidate_models = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite"]
 
+            for model_name in candidate_models:
                 try:
-
                     response = client.models.generate_content(
                         model=model_name,
-                        contents=prompt
+                        contents=prompt,
                     )
-
-                    print("======================================")
-                    print(f"GEMINI SUCCESS (model: {model_name})")
-                    print("======================================")
-
-                    return response.text
-
+                    if response and hasattr(response, "text") and response.text:
+                        return response.text.strip()
                 except Exception as model_err:
-
-                    print(f"Model {model_name} failed: {model_err}")
+                    logger.warning("Gemini model %s failed: %s", model_name, type(model_err).__name__)
                     continue
 
-            raise Exception("All Gemini models failed")
-
+            raise RuntimeError("All configured Gemini models failed to respond.")
 
         except Exception as e:
+            logger.error("Gemini API call error: %s", type(e).__name__)
 
-            print("======================================")
-            print("GEMINI API ERROR")
-            print(str(e))
-            print("======================================")
-
-            # ----------------------------------------------------
-            # Development fallback
-            # ----------------------------------------------------
-
+            # Fallback responses for common kitchen queries if offline or API error occurs
             lower = message.lower()
-
-
             if "dal" in lower:
-
                 return (
-                    "Dal Tadka uses approximately 45g of gas "
-                    "and takes about 20 minutes. "
-                    "Using a pressure cooker can help save gas."
+                    "Dal Tadka uses approximately 45g of gas and takes about 20 minutes. "
+                    "Using a pressure cooker can help save up to 30% gas."
                 )
-
-
             if "rice" in lower:
-
                 return (
-                    "1 cup of rice uses approximately 25g of gas "
-                    "and takes around 15 minutes."
+                    "1 cup of rice uses approximately 25g of gas and takes around 15 minutes. "
+                    "Soaking rice for 30 minutes before cooking reduces gas usage."
                 )
-
-
-            if "roti" in lower:
-
+            if "roti" in lower or "chapati" in lower:
                 return (
-                    "6 rotis use approximately 30g of gas "
-                    "and take around 12 minutes."
+                    "Cooking 10 rotis uses approximately 60g of gas and takes around 15 minutes. "
+                    "Preheating the tawa properly saves time and fuel."
                 )
-
-
             if "sambar" in lower:
-
                 return (
-                    "Sambar uses approximately 60g of gas "
-                    "and takes around 30 minutes."
+                    "Sambar uses approximately 60g of gas and takes around 30 minutes."
                 )
-
-
-            if (
-                "gas" in lower
-                or "consumption" in lower
-            ):
-
+            if "gas" in lower or "save" in lower or "saving" in lower:
                 return (
-                    "I can help estimate LPG consumption "
-                    "for your cooking."
+                    "Top Gas Saving Tips:\n"
+                    "1. Keep burner flames within the pan base size.\n"
+                    "2. Soak lentils and rice before boiling.\n"
+                    "3. Always cover pots with lids while simmering."
                 )
-
 
             return (
-                "I'm currently unable to connect to Gemini. "
-                "Please check the backend terminal for the "
-                "Gemini API error."
+                "I am currently having trouble reaching the Gemini service. "
+                "Please try again in a moment."
             )
 
 
@@ -283,4 +250,4 @@ User message:
 # SERVICE INSTANCE
 # ================================================================
 
-cooking_service = CookingService()
+cooking_service = CookingService()

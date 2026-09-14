@@ -25,7 +25,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
         obj_in_data = obj_in.model_dump()  # type: ignore[union-attr]
-        db_obj = self.model(**obj_in_data)
+        mapper = sa_inspect(self.model)
+        valid_keys = {column.key for column in mapper.columns}
+        filtered_data = {k: v for k, v in obj_in_data.items() if k in valid_keys}
+        db_obj = self.model(**filtered_data)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

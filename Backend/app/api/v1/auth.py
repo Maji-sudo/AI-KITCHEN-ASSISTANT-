@@ -7,14 +7,33 @@ from google.auth.transport import requests
 from app.db.database import get_db
 from app.repositories.user_repository import user_repo
 from app.schemas.user import UserCreate
-from app.schemas.auth import AuthResponse
-from app.services.jwt_service import create_access_token
-
+from app.schemas.auth import AuthResponse, OTPRequest, OTPVerify
+from app.services.auth_service import auth_service
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
+
+
+@router.post("/request-otp")
+def request_otp(body: OTPRequest):
+    """Request OTP for phone number."""
+    auth_service.send_otp_for_phone(body.phone)
+    return {"message": "OTP sent successfully", "phone": body.phone}
+
+
+@router.post("/verify-otp", response_model=AuthResponse)
+def verify_otp(body: OTPVerify, db: Session = Depends(get_db)):
+    """Verify OTP and login/register user."""
+    auth_resp = auth_service.verify_otp_and_login(db, body.phone, body.otp)
+    if not auth_resp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OTP"
+        )
+    return auth_resp
+
 
 
 # ==========================================================

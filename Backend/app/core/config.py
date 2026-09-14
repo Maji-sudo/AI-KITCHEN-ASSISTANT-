@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
+    OTP_EXPIRE_MINUTES: int = 10
+
+    GEMINI_API_KEY: str = ""
 
     API_PREFIX: str = "/api/v1"
 

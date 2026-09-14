@@ -15,7 +15,7 @@ def create_access_token(user_id: int, expires_delta: Optional[timedelta] = None)
         expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode = {
-        "sub": user_id,
+        "sub": str(user_id),
         "exp": expire
     }
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
@@ -24,9 +24,10 @@ def create_access_token(user_id: int, expires_delta: Optional[timedelta] = None)
 def decode_access_token(token: str) -> Optional[TokenPayload]:
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        sub_val = payload.get("sub")
         return TokenPayload(
-            sub=payload.get("sub"),
+            sub=int(sub_val) if sub_val is not None else None,
             exp=payload.get("exp")
         )
-    except jwt.PyJWTError:
+    except Exception:
         return None

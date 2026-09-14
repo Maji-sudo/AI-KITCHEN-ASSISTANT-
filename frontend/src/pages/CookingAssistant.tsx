@@ -18,6 +18,7 @@ import { mockDishes, mockCookingHistory } from '@/utils/mockData'
 import { cookingService } from '@/services/cooking.service'
 import type { ChatMessage, Dish } from '@/types'
 import { formatGrams } from '@/utils/cn'
+import ReactMarkdown from 'react-markdown'
 
 export function CookingAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -119,7 +120,7 @@ export function CookingAssistant() {
             {messages.map((m) => (
               <div
                 key={m.id}
-                className={`flex gap-3 text-xs ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-3 text-sm ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.role === 'assistant' && (
                   <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -133,7 +134,68 @@ export function CookingAssistant() {
                       : 'bg-slate-100 dark:bg-slate-700/60 text-slate-800 dark:text-slate-100 rounded-bl-none'
                   }`}
                 >
-                  <p className="leading-relaxed">{m.content}</p>
+                  {m.role === 'assistant' ? (
+                    <div className="leading-7">
+                    <ReactMarkdown
+                      components={{
+                        h1: ({ node, ...props }) => (
+                          <h1 className="text-base font-bold mt-3 mb-1" {...props} />
+                        ),
+                        h2: ({ node, ...props }) => (
+                          <h2 className="text-sm font-bold mt-2 mb-1" {...props} />
+                        ),
+                        h3: ({ node, ...props }) => (
+                          <h3 className="text-sm font-semibold mt-2 mb-1" {...props} />
+                        ),
+                        p: ({ node, ...props }) => (
+                          <p className="mb-2 last:mb-0" {...props} />
+                        ),
+                        ul: ({ node, ...props }) => (
+                          <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />
+                        ),
+                        ol: ({ node, ...props }) => (
+                          <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />
+                        ),
+                        li: ({ node, ...props }) => (
+                          <li className="leading-relaxed" {...props} />
+                        ),
+                        strong: ({ node, ...props }) => (
+                          <strong className="font-semibold" {...props} />
+                        ),
+                        em: ({ node, ...props }) => (
+                          <em className="italic" {...props} />
+                        ),
+                        code: ({ node, inline, className, children, ...props }: any) =>
+                          inline ? (
+                            <code
+                              className="bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-100 rounded px-1 py-0.5 text-xs font-mono"
+                              {...props}
+                            >
+                              {children}
+                            </code>
+                          ) : (
+                            <pre className="bg-slate-200 dark:bg-slate-600 rounded-lg p-3 overflow-x-auto mb-2 text-xs">
+                              <code className="font-mono" {...props}>
+                                {children}
+                              </code>
+                            </pre>
+                          ),
+                        a: ({ node, ...props }) => (
+                          <a
+                            className="text-primary underline hover:opacity-80"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            {...props}
+                          />
+                        ),
+                      }}
+                    >
+                      {m.content}
+                    </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="leading-relaxed">{m.content}</p>
+                  )}
                 </div>
                 {m.role === 'user' && (
                   <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 font-bold">

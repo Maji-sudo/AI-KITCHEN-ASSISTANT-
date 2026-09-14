@@ -48,7 +48,9 @@ class AuthService:
         return AuthResponse(
             access_token=token,
             token_type="bearer",
-            user={"id": user.id, "name": user.name, "phone": user.phone}
+            user_id=int(user.id),
+            name=str(user.name),
+            phone=str(user.phone)
         )
 
 auth_service = AuthService()

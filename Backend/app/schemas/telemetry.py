@@ -4,9 +4,23 @@ from pydantic import BaseModel
 
 # --- Gas Reading ---
 class GasReadingBase(BaseModel):
-    ppm_value: float
+    ppm_value: Optional[float] = 0.0
+    mq2_raw: Optional[float] = None
+    mq2_ppm: Optional[float] = None
+    mq5_raw: Optional[float] = None
+    mq5_ppm: Optional[float] = None
+    mq9_raw: Optional[float] = None
+    mq9_ppm: Optional[float] = None
     status: str = "normal"  # normal | warning | critical
     timestamp: datetime
+
+    def __init__(self, **data):
+        if "ppm_value" not in data or data.get("ppm_value") is None or data.get("ppm_value") == 0:
+            ppms = [data.get("mq2_ppm"), data.get("mq5_ppm"), data.get("mq9_ppm")]
+            valid_ppms = [p for p in ppms if p is not None]
+            if valid_ppms:
+                data["ppm_value"] = max(valid_ppms)
+        super().__init__(**data)
 
 class GasReadingCreate(GasReadingBase):
     device_id: str
