@@ -138,31 +138,31 @@ export function CookingAssistant() {
                     <div className="leading-7">
                     <ReactMarkdown
                       components={{
-                        h1: ({ node, ...props }) => (
+                        h1: ({ node, ...props }: any) => (
                           <h1 className="text-base font-bold mt-3 mb-1" {...props} />
                         ),
-                        h2: ({ node, ...props }) => (
+                        h2: ({ node, ...props }: any) => (
                           <h2 className="text-sm font-bold mt-2 mb-1" {...props} />
                         ),
-                        h3: ({ node, ...props }) => (
+                        h3: ({ node, ...props }: any) => (
                           <h3 className="text-sm font-semibold mt-2 mb-1" {...props} />
                         ),
-                        p: ({ node, ...props }) => (
+                        p: ({ node, ...props }: any) => (
                           <p className="mb-2 last:mb-0" {...props} />
                         ),
-                        ul: ({ node, ...props }) => (
+                        ul: ({ node, ...props }: any) => (
                           <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />
                         ),
-                        ol: ({ node, ...props }) => (
+                        ol: ({ node, ...props }: any) => (
                           <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />
                         ),
-                        li: ({ node, ...props }) => (
+                        li: ({ node, ...props }: any) => (
                           <li className="leading-relaxed" {...props} />
                         ),
-                        strong: ({ node, ...props }) => (
+                        strong: ({ node, ...props }: any) => (
                           <strong className="font-semibold" {...props} />
                         ),
-                        em: ({ node, ...props }) => (
+                        em: ({ node, ...props }: any) => (
                           <em className="italic" {...props} />
                         ),
                         code: ({ node, inline, className, children, ...props }: any) =>
@@ -180,7 +180,7 @@ export function CookingAssistant() {
                               </code>
                             </pre>
                           ),
-                        a: ({ node, ...props }) => (
+                        a: ({ node, ...props }: any) => (
                           <a
                             className="text-primary underline hover:opacity-80"
                             target="_blank"

@@ -32,8 +32,8 @@ export function Analytics() {
       month: 'short',
       day: 'numeric',
     }),
-    Consumption: d.consumption_g,
-    Forecast: d.forecast_next_g || d.consumption_g * 0.95,
+    Consumption: d.consumption_g ?? 0,
+    Forecast: d.forecast_next_g ?? (d.consumption_g ?? 0) * 0.95,
     isAnomaly: d.anomaly_flag,
   }))
 
@@ -190,7 +190,7 @@ export function Analytics() {
                     })}
                   </td>
                   <td className="py-3 px-3 font-bold text-slate-900 dark:text-white">
-                    {formatGrams(d.consumption_g)}
+                    {formatGrams(d.consumption_g ?? 0)}
                   </td>
                   <td className="py-3 px-3 text-slate-600 dark:text-slate-300">
                     {d.avg_rate} g/hr

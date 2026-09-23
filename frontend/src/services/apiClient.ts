@@ -25,6 +25,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('access_token')
       localStorage.removeItem('user_name')
       localStorage.removeItem('user_id')
+      localStorage.removeItem('user_phone')
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'
       }

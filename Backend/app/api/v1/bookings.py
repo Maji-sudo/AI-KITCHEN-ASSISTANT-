@@ -1,9 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
+from app.models.booking import Booking
 from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse
 from app.services.booking_service import booking_service
 
@@ -26,6 +27,7 @@ def create_booking(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Always derive user_id from JWT — never trust client-supplied value
     body.user_id = current_user.id
     return booking_service.create_booking(db, booking_in=body)
 
@@ -33,11 +35,20 @@ def create_booking(
 @router.patch("/{booking_id}/status", response_model=BookingResponse)
 def update_booking_status(
     booking_id: int,
-    status: str,
+    new_status: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    result = booking_service.update_booking_status(db, booking_id=booking_id, status=status)
+    # Verify the booking belongs to the current user before allowing update
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this booking"
+        )
+    result = booking_service.update_booking_status(db, booking_id=booking_id, status=new_status)
     if not result:
         raise HTTPException(status_code=404, detail="Booking not found")
     return result

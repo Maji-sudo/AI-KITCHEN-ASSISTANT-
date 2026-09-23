@@ -213,7 +213,7 @@ export function Settings() {
               <Shield className="h-4 w-4" /> Sign Out of Account
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              You will need to verify your phone number via OTP to sign back in.
+              You will need to sign in with your email and password to access your account again.
             </p>
           </div>
 

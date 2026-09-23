@@ -108,8 +108,16 @@ def log_cooking_session(
     """
     Record a cooking session for the logged-in user.
     """
-
     body.user_id = int(current_user.id)
+
+    if body.device_id:
+        from app.models.device import Device
+        device = db.query(Device).filter(Device.id == body.device_id).first()
+        if device and device.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this device"
+            )
 
     return cooking_service.record_cooking_session(
         db,
@@ -129,21 +137,29 @@ def update_cooking_session(
 ):
     """
     Update an existing cooking session.
+    Verifies that the session belongs to the logged-in user.
     """
+    from app.models.cooking_history import CookingHistory
+    session = db.query(CookingHistory).filter(CookingHistory.id == session_id).first()
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cooking session not found",
+        )
+
+    if session.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this cooking session",
+        )
 
     result = cooking_service.update_cooking_session(
         db,
         session_id=session_id,
         session_in=body,
     )
-
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="Cooking session not found",
-        )
-
     return result
+
 
 
 # ============================================================

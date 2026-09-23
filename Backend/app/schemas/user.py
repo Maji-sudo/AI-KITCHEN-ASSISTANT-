@@ -5,8 +5,8 @@ from pydantic import BaseModel, EmailStr
 
 class UserBase(BaseModel):
     name: str
-    phone: str
-    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    email: EmailStr
     language_pref: Optional[str] = "en"
 
 
@@ -14,7 +14,7 @@ class UserCreate(UserBase):
     pass
 
 
-# UserUpdate does NOT inherit UserBase so all fields can be Optional
+# UserUpdate — all fields Optional so partial updates work
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
@@ -28,3 +28,10 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+
+# Used by PATCH /auth/me — profile update (no password change here)
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    language_pref: Optional[str] = None

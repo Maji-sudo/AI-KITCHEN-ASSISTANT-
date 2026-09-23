@@ -5,18 +5,16 @@ export interface AuthTokens {
   token_type: string
 }
 
-export interface OTPRequestPayload { phone: string }
-export interface OTPVerifyPayload  { phone: string; otp: string }
-
 // ─── User ────────────────────────────────────────────────────────────────────
 export interface User {
   id: number
   name: string
-  phone: string
+  phone?: string | null
   email?: string
   language_pref: 'en' | 'hi' | 'ta'
   created_at: string
 }
+
 
 // ─── Device ──────────────────────────────────────────────────────────────────
 export type DeviceStatus = 'active' | 'inactive' | 'offline' | 'error'
@@ -45,7 +43,7 @@ export interface Cylinder {
 }
 
 // ─── Telemetry ───────────────────────────────────────────────────────────────
-export type GasStatus = 'safe' | 'warning' | 'danger'
+export type GasStatus = 'safe' | 'warning' | 'danger' | 'critical' | 'normal'
 
 export interface GasReading {
   id: number
@@ -80,11 +78,13 @@ export interface UsageAnalytics {
   device_id: string
   period_type: PeriodType
   period_start: string
-  consumption_g: number
-  avg_rate: number
-  anomaly_flag: boolean
+  consumption_g?: number
+  total_consumption_g?: number
+  avg_rate?: number
+  anomaly_flag?: boolean
   forecast_next_g?: number
 }
+
 
 export interface RefillPrediction {
   id: number

@@ -230,3 +230,37 @@ def add_cylinder(
         db,
         cylinder_in=cylinder_in
     )
+
+
+# --------------------------------------------------
+# DELETE / UNPAIR DEVICE
+# --------------------------------------------------
+
+@router.delete(
+    "/{device_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_device(
+    device_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    device = device_service.get_device(
+        db,
+        device_id=device_id
+    )
+
+    if device is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Device not found"
+        )
+
+    if device.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this device"
+        )
+
+    device_service.remove_device(db, device_id=device_id)
+    return None

@@ -27,20 +27,48 @@ import { Modal } from '@/components/ui/Modal'
 import { mockGasReadings, mockCurrentPPM, mockLeakEvents } from '@/utils/mockData'
 import { formatPPM, formatDateTime } from '@/utils/cn'
 
+import { useQuery } from '@tanstack/react-query'
+import { deviceService } from '@/services/device.service'
+
 export function Safety() {
   const [isShutoffActive, setIsShutoffActive] = useState(true)
   const [showEmergencyModal, setShowEmergencyModal] = useState(false)
-  const [ppmValue] = useState(mockCurrentPPM)
 
-  const chartData = mockGasReadings.map((r) => ({
+  const { data: devices = [] } = useQuery({
+    queryKey: ['devices'],
+    queryFn: deviceService.getDevices,
+  })
+
+  const activeDevice = devices[0] || null
+
+  const { data: gasReadings = [] } = useQuery({
+    queryKey: ['gasReadings', activeDevice?.id],
+    queryFn: () => (activeDevice ? deviceService.getGasReadings(activeDevice.id, 30) : Promise.resolve([])),
+    enabled: !!activeDevice,
+  })
+
+  const { data: leakEvents = [] } = useQuery({
+    queryKey: ['leakEvents', activeDevice?.id],
+    queryFn: () => (activeDevice ? deviceService.getLeakEvents(activeDevice.id) : Promise.resolve([])),
+    enabled: !!activeDevice,
+  })
+
+  const latestReading = gasReadings[0]
+  const ppmValue = latestReading ? latestReading.ppm_value : mockCurrentPPM
+
+  const displayReadings = gasReadings.length > 0 ? [...gasReadings].reverse() : mockGasReadings
+  const chartData = displayReadings.map((r) => ({
     time: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     ppm: r.ppm_value,
   }))
+
+  const displayLeaks = leakEvents.length > 0 ? leakEvents : mockLeakEvents
 
   const handleToggleValve = () => {
     setIsShutoffActive((prev) => !prev)
     setShowEmergencyModal(false)
   }
+
 
   return (
     <div className="space-y-6">
@@ -178,7 +206,7 @@ export function Safety() {
           </div>
 
           <div className="space-y-4">
-            {mockLeakEvents.map((event) => (
+            {displayLeaks.map((event) => (
               <div
                 key={event.id}
                 className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"

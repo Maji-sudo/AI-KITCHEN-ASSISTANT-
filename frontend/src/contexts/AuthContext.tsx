@@ -1,29 +1,43 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { User } from '@/types'
-import { authService } from '@/services/auth.service'
+import { authService, type AuthResponse, type RegisterPayload, type LoginPayload } from '@/services/auth.service'
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
-  login: (phone: string, otp: string) => Promise<void>
+  login: (payload: LoginPayload) => Promise<AuthResponse>
+  register: (payload: RegisterPayload) => Promise<AuthResponse>
+  updatePhone: (phone: string) => Promise<User>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+// queryClient reset function — injected from App.tsx so AuthContext
+// doesn't need to import QueryClient directly.
+let _resetQueryCache: (() => void) | null = null
+export function setQueryCacheResetter(fn: () => void) {
+  _resetQueryCache = fn
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // On mount: if we have a stored token, validate it against the real backend
   const loadUser = useCallback(async () => {
     const token = localStorage.getItem('access_token')
-    if (!token) { setIsLoading(false); return }
+    if (!token) {
+      setIsLoading(false)
+      return
+    }
     try {
       const me = await authService.getMe()
       setUser(me)
     } catch {
-      localStorage.clear()
+      // Token invalid or expired — clear everything
+      authService.logout()
     } finally {
       setIsLoading(false)
     }
@@ -31,31 +45,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { loadUser() }, [loadUser])
 
-  const login = async (phone: string, otp: string) => {
-    // ── Demo mode bypass ──────────────────────────────────────────────────
-    // If the user enters the demo OTP (123456) we skip the real API call
-    // and stub out a local demo session so the app works without a backend.
-    if (otp === '123456') {
-      localStorage.setItem('access_token', 'demo-token')
-      localStorage.setItem('user_name', 'Demo User')
-      localStorage.setItem('user_id', '0')
-      const me = await authService.getMe()
-      setUser(me)
-      return
-    }
-    // ─────────────────────────────────────────────────────────────────────
-    await authService.verifyOTP({ phone, otp })
+  const login = async (payload: LoginPayload): Promise<AuthResponse> => {
+    const res = await authService.login(payload)
     const me = await authService.getMe()
     setUser(me)
+    return res
+  }
+
+  const register = async (payload: RegisterPayload): Promise<AuthResponse> => {
+    const res = await authService.register(payload)
+    const me = await authService.getMe()
+    setUser(me)
+    return res
+  }
+
+  const updatePhone = async (phone: string): Promise<User> => {
+    const updatedUser = await authService.updatePhone(phone)
+    setUser(updatedUser)
+    return updatedUser
   }
 
   const logout = () => {
+    // 1. Clear stored token + user cache
     authService.logout()
+    // 2. Wipe React Query cache so the next user never sees stale data
+    if (_resetQueryCache) _resetQueryCache()
+    // 3. Clear React state → ProtectedRoute redirects to /login
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, register, updatePhone, logout }}>
       {children}
     </AuthContext.Provider>
   )
