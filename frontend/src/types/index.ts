@@ -17,7 +17,7 @@ export interface User {
 
 
 // ─── Device ──────────────────────────────────────────────────────────────────
-export type DeviceStatus = 'active' | 'inactive' | 'offline' | 'error'
+export type DeviceStatus = 'active' | 'inactive' | 'online' | 'offline' | 'error' | 'connected' | 'disconnected' | (string & {})
 
 export interface Device {
   id: string

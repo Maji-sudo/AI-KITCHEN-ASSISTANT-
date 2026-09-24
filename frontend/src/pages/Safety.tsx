@@ -64,10 +64,12 @@ export function Safety() {
 
   const displayLeaks = leakEvents.length > 0 ? leakEvents : mockLeakEvents
 
-  const handleToggleValve = () => {
+  const handleToggleValve = async () => {
     setIsShutoffActive((prev) => !prev)
     setShowEmergencyModal(false)
   }
+
+
 
 
   return (
@@ -97,6 +99,8 @@ export function Safety() {
           {isShutoffActive ? 'Emergency Valve Shutoff' : 'Re-open Solenoid Valve'}
         </Button>
       </div>
+
+
 
       {/* Grid Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

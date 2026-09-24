@@ -91,14 +91,6 @@ export function Devices() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCreateSimulatedDevice}
-            isLoading={isSimulating}
-            leftIcon={<Sliders className="h-4 w-4" />}
-          >
-            Add Simulated Device
-          </Button>
           <Button onClick={() => setShowPairModal(true)} leftIcon={<Plus className="h-4 w-4" />}>
             Pair New Device
           </Button>
@@ -119,10 +111,10 @@ export function Devices() {
           <Radio className="h-10 w-10 text-slate-400 mx-auto animate-pulse" />
           <h3 className="font-bold text-sm text-slate-900 dark:text-white">No Devices Paired Yet</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            You don't have any SafeGas devices linked to your account. Add a simulated device for development or pair a physical ESP32.
+            You don't have any SafeGas devices linked to your account. Pair a physical ESP32 or enter your device serial ID.
           </p>
-          <Button onClick={handleCreateSimulatedDevice} isLoading={isSimulating} className="mt-2">
-            Create Simulated Device
+          <Button onClick={() => setShowPairModal(true)} leftIcon={<Plus className="h-4 w-4" />} className="mt-2">
+            Pair New Device
           </Button>
         </Card>
       ) : (

@@ -114,7 +114,7 @@ export function Dashboard() {
     : 'In ~25 days'
 
   const lastDay = dailyAnalytics[dailyAnalytics.length - 1]
-  const todayConsumption = (lastDay?.total_consumption_g ?? lastDay?.consumption_g) ?? 310
+  const todayConsumption = lastDay?.consumption_g ?? 310
   const activeRecs = mockRecommendations.filter((r) => r.status === 'active')
 
 

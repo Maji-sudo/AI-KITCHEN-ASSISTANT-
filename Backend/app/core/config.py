@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = ""
 
+    SAFEGAS_DEMO_MODE: bool = True
+
     API_PREFIX: str = "/api/v1"
 
     model_config = SettingsConfigDict(

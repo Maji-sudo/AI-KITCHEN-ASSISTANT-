@@ -28,6 +28,10 @@ Security guarantees:
 
 from typing import Optional
 from sqlalchemy.orm import Session
+from app.core.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 from fastapi import HTTPException, status
 
 from app.models.user import User
@@ -129,7 +133,16 @@ class AuthService:
 
         print(f"[AUTH] New user registered: id={user.id} email={user.email}")
 
-        # 5. Issue SafeGas JWT
+        # 5. Non-blocking initial demo data generation if enabled
+        if getattr(settings, "SAFEGAS_DEMO_MODE", True):
+            try:
+                from scripts.generate_synthetic_telemetry import initialize_demo_data_for_user
+                demo_status = initialize_demo_data_for_user(db, user.id)
+                logger.info(f"[DEMO] Initialized synthetic telemetry for user id={user.id}: status={demo_status}")
+            except Exception as demo_err:
+                logger.error(f"[DEMO] Non-blocking initial telemetry generation failed: {demo_err}")
+
+        # 6. Issue SafeGas JWT
         token = create_access_token(user_id=user.id)
         user_resp = UserResponse.model_validate(user)
 
