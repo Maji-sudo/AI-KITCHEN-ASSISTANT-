@@ -46,12 +46,14 @@ export function categoryBadge(cat: RecommendationCategory) {
 
 export function gasStatusBadge(status: GasStatus) {
   const map: Record<GasStatus, { label: string; variant: Variant }> = {
+    normal: { label: '✅ Safe (Normal)', variant: 'success' },
     safe: { label: '✅ Safe', variant: 'success' },
     warning: { label: '⚠️ Warning', variant: 'warning' },
+    critical: { label: '🚨 Critical (Leak)', variant: 'danger' },
     danger: { label: '🚨 Danger', variant: 'danger' },
   }
-  const { label, variant } = map[status]
-  return <Badge variant={variant}>{label}</Badge>
+  const item = map[status] || { label: String(status), variant: 'default' }
+  return <Badge variant={item.variant}>{item.label}</Badge>
 }
 
 export function bookingStatusBadge(status: BookingStatus) {

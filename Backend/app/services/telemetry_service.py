@@ -20,6 +20,7 @@ from app.models.weight_reading import WeightReading
 from app.models.leak_event import LeakEvent
 from app.models.device import Device
 from app.services.notification_service import notification_service
+from app.services.valve_command_service import valve_command_service
 from app.services.system_log_service import system_log_service
 
 logger = logging.getLogger(__name__)
@@ -57,13 +58,9 @@ class TelemetryService:
         """
         ppm = reading_in.ppm_value
 
-        # ── Classify ──────────────────────────────────────────────────
-        if ppm >= PPM_CRITICAL_THRESHOLD:
-            reading_in.status = "critical"
-        elif ppm >= PPM_WARNING_THRESHOLD:
-            reading_in.status = "warning"
-        else:
-            reading_in.status = "normal"
+        # ── Classify using shared service ────────────────────────
+        from app.services.safety_classification import classify_gas
+        reading_in.status = classify_gas(ppm)
 
         # ── Persist reading ───────────────────────────────────────────
         saved_reading = gas_reading_repo.create(db, obj_in=reading_in)
@@ -82,16 +79,31 @@ class TelemetryService:
                 reading_in.device_id, ppm,
             )
             self._handle_warning_gas(db, reading_in.device_id, ppm)
+            
+        else:
+            self._handle_normal_gas(db, reading_in.device_id)
 
         return saved_reading
 
-    # ── Critical gas handler ──────────────────────────────────────────
     def _handle_critical_gas(
         self, db: Session, device_id: str, ppm: float
     ) -> None:
-        """Auto-create a LeakEvent and fire an emergency notification."""
+        """Enforce Leak Event state machine for critical gas readings."""
+        
+        # 1) Query for an existing active LeakEvent
+        active_leaks = self.get_unresolved_leaks(db, device_id)
+        if active_leaks:
+            # Maintain active leak, update peak_ppm if necessary
+            leak = active_leaks[0]
+            if ppm > leak.peak_ppm:
+                leak_event_repo.update(
+                    db,
+                    db_obj=leak,
+                    obj_in=LeakEventUpdate(peak_ppm=ppm)
+                )
+            return
 
-        # 1) Create a LeakEvent
+        # 2) Create a new LeakEvent if none exists
         leak_in = LeakEventCreate(
             device_id=device_id,
             start_time=datetime.now(timezone.utc),
@@ -100,13 +112,18 @@ class TelemetryService:
             false_alarm=False,
         )
         self.record_leak_event(db, event_in=leak_in)
+        
+        # 3) Issue emergency close command
+        device = db.query(Device).filter(Device.id == device_id).first()
+        if device:
+            valve_command_service.issue_emergency_close(db, device)
 
-        # 2) Write system log
+        # 4) Write system log
         system_log_service.log(
             db,
             device_id=device_id,
             log_level="CRITICAL",
-            message=f"Auto-created leak event — PPM {ppm:.0f} exceeded critical threshold {PPM_CRITICAL_THRESHOLD}",
+            message=f"Auto-created leak event & shut off valve — PPM {ppm:.0f} exceeded critical threshold {PPM_CRITICAL_THRESHOLD}",
         )
 
     # ── Warning gas handler ───────────────────────────────────────────
@@ -128,6 +145,18 @@ class TelemetryService:
             log_level="WARNING",
             message=f"Gas warning — PPM {ppm:.0f} exceeded warning threshold {PPM_WARNING_THRESHOLD}",
         )
+        
+    def _handle_normal_gas(self, db: Session, device_id: str) -> None:
+        """Auto-resolve active leaks when gas drops to normal."""
+        active_leaks = self.get_unresolved_leaks(db, device_id)
+        for leak in active_leaks:
+            self.resolve_leak_event(db, event_id=leak.id)
+            system_log_service.log(
+                db,
+                device_id=device_id,
+                log_level="INFO",
+                message=f"Auto-resolved leak event {leak.id} as gas dropped to normal",
+            )
 
     def get_recent_gas_readings(
         self, db: Session, device_id: str, limit: int = 100
@@ -163,11 +192,17 @@ class TelemetryService:
         # ── Notify device owner ───────────────────────────────────────
         user_id = self._get_device_owner_id(db, event_in.device_id)
         if user_id:
-            notification_service.send_emergency_alert(
+            notif = notification_service.send_emergency_alert(
                 db,
                 user_id=user_id,
                 device_id=event_in.device_id,
                 ppm_value=event_in.peak_ppm,
+            )
+            # link notification to leak event
+            leak_event_repo.update(
+                db,
+                db_obj=leak,
+                obj_in=LeakEventUpdate(notification_id=notif.id),
             )
         else:
             logger.warning(

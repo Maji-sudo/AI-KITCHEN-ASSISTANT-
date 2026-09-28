@@ -15,6 +15,8 @@ class LeakEvent(Base):
     peak_ppm: Mapped[float] = mapped_column(Float, nullable=False)
     auto_shutoff_triggered: Mapped[bool] = mapped_column(Boolean, default=False)
     false_alarm: Mapped[bool] = mapped_column(Boolean, default=False)
+    notification_id: Mapped[Optional[int]] = mapped_column(ForeignKey("notifications.id"), nullable=True)
 
     # Relationships
     device: Mapped["Device"] = relationship("Device", back_populates="leak_events")
+    notification: Mapped["Notification"] = relationship("Notification", backref="leak_event", uselist=False)

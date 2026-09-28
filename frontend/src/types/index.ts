@@ -45,14 +45,15 @@ export interface Cylinder {
 }
 
 // ─── Telemetry ───────────────────────────────────────────────────────────────
-export type GasStatus = 'safe' | 'warning' | 'danger'
+export type GasStatus = 'normal' | 'warning' | 'critical' | 'safe' | 'danger'
 
 export interface GasReading {
   id: number
   device_id: string
   ppm_value: number
-  status: GasStatus
+  status: string
   timestamp: string
+  source?: string
 }
 
 export interface WeightReading {
@@ -70,7 +71,90 @@ export interface LeakEvent {
   peak_ppm: number
   auto_shutoff_triggered: boolean
   false_alarm: boolean
+  notification_id?: number | null
 }
+
+// ─── Safety & Diagnostics (Phase 7-9) ───────────────────────────────────────
+export interface SafetyStatusResponse {
+  device_id: string
+  latest_gas_ppm?: number | null
+  timestamp?: string | null
+  status?: string | null  // normal | warning | critical
+  valve_status?: string | null // OPEN | CLOSED
+  connection_status?: string | null // online | offline | unknown
+  last_seen?: string | null
+}
+
+export interface ActiveLeakResponse {
+  id: number
+  device_id: string
+  start_time: string
+  end_time?: string | null
+  peak_ppm: number
+  auto_shutoff_triggered?: boolean
+  false_alarm?: boolean
+  notification_id?: number | null
+  active: boolean
+}
+
+export interface LeakHistoryResponse {
+  leaks: ActiveLeakResponse[]
+}
+
+export interface DiagnosticDeviceNode {
+  id: string
+  name: string
+  paired: boolean
+}
+
+export interface DiagnosticConnectionNode {
+  status: string
+  last_seen?: string | null
+}
+
+export interface DiagnosticSensorNode {
+  health: string
+  battery_level?: number | null
+  signal_strength?: number | null
+  last_calibrated_at?: string | null
+}
+
+export interface DiagnosticTelemetryNode {
+  latest_gas_ppm?: number | null
+  timestamp?: string | null
+  source?: string | null
+}
+
+export interface DiagnosticSafetyNode {
+  valve_status: string
+}
+
+export interface DeviceDiagnosticsResponse {
+  device: DiagnosticDeviceNode
+  connection: DiagnosticConnectionNode
+  sensor: DiagnosticSensorNode
+  telemetry: DiagnosticTelemetryNode
+  safety: DiagnosticSafetyNode
+}
+
+export interface SimulatorStartRequest {
+  device_id: string
+  baseline_ppm?: number
+  interval_seconds?: number
+  count?: number
+  mode?: string
+}
+
+export interface SimulatorStatusResponse {
+  device_id: string
+  running: boolean
+  generated_count: number
+  baseline_ppm?: number | null
+  last_ppm?: number | null
+  interval_seconds?: number | null
+  mode?: string | null
+}
+
 
 // ─── Analytics ───────────────────────────────────────────────────────────────
 export type PeriodType = 'daily' | 'weekly' | 'monthly'

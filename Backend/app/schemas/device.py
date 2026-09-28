@@ -30,6 +30,10 @@ class DeviceBase(BaseModel):
     name: str
     firmware_version: Optional[str] = None
     status: Optional[str] = "inactive"
+    valve_status: Optional[str] = "OPEN"
+    battery_level: Optional[int] = None
+    signal_strength: Optional[int] = None
+    sensor_health_status: Optional[str] = "healthy"
 
 class DeviceCreate(DeviceBase):
     id: str  # Usually MAC address or specific serial
@@ -45,6 +49,7 @@ class DeviceResponse(DeviceBase):
     id: str
     user_id: Optional[int] = None
     paired_at: Optional[datetime] = None
+    last_calibrated_at: Optional[datetime] = None
     cylinders: List[CylinderResponse] = Field(default_factory=list)
 
     class Config:

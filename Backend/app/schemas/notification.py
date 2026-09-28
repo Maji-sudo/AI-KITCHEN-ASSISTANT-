@@ -7,13 +7,15 @@ class NotificationBase(BaseModel):
     channel: str
     payload: Optional[Dict[str, Any]] = None
     delivery_status: Optional[str] = "pending"
+    read: Optional[bool] = False
 
 class NotificationCreate(NotificationBase):
     user_id: int
     sent_at: Optional[datetime] = None
 
 class NotificationUpdate(BaseModel):
-    delivery_status: str
+    delivery_status: Optional[str] = None
+    read: Optional[bool] = None
 
 class NotificationResponse(NotificationBase):
     id: int

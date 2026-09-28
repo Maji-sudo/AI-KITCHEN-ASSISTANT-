@@ -47,7 +47,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         else:
             update_data = obj_in.model_dump(exclude_unset=True)  # type: ignore[union-attr]
         for field, value in update_data.items():
-            if field in obj_data:
+            if hasattr(db_obj, field):
                 setattr(db_obj, field, value)
         db.add(db_obj)
         db.commit()

@@ -16,8 +16,25 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.db.base import Base
+from app.db.database import Base
 from app.core.config import settings
+
+# Import all models to ensure they are registered with Base.metadata
+from app.models.user import User
+from app.models.device import Device
+from app.models.cylinder import Cylinder
+from app.models.gas_reading import GasReading
+from app.models.leak_event import LeakEvent
+from app.models.notification import Notification
+from app.models.system_log import SystemLog
+from app.models.weight_reading import WeightReading
+from app.models.usage_analytics import UsageAnalytics
+from app.models.refill_prediction import RefillPrediction
+from app.models.efficiency_score import EfficiencyScore
+from app.models.booking import Booking
+from app.models.dish import Dish
+from app.models.cooking_history import CookingHistory
+from app.models.recommendation import Recommendation
 
 target_metadata = Base.metadata
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
