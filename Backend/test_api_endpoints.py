@@ -52,22 +52,11 @@ def run_tests():
     print(f"\n1. Root Endpoint: Status {status}")
     print(f"   Response: {data}")
 
-    # 2. Request OTP
-    phone = "+919876543210"
-    status, data = http_post(f"{BASE_URL}/auth/request-otp", {"phone": phone})
-    print(f"\n2. Request OTP: Status {status}")
+    # 2. Firebase Login Endpoint Check (replaces legacy OTP)
+    status, data = http_post(f"{BASE_URL}/auth/firebase-login", {"id_token": "sample_firebase_id_token"})
+    print(f"\n2. Firebase Login (Invalid Token Check): Status {status}")
     print(f"   Response: {data}")
-
-    # 3. Verify OTP (Uses test OTP 123456 in DEBUG mode)
-    status, data = http_post(f"{BASE_URL}/auth/verify-otp", {"phone": phone, "otp": "123456"})
-    print(f"\n3. Verify OTP: Status {status}")
     headers = {}
-    if status == 200:
-        token = data["access_token"]
-        print(f"   Success! JWT Token: {token[:25]}...")
-        headers["Authorization"] = f"Bearer {token}"
-    else:
-        print(f"   Response: {data}")
 
     # 4. Public Dish Library
     status, data = http_get(f"{BASE_URL}/cooking/dishes")

@@ -12,6 +12,9 @@ import { Gauge } from '@/components/ui/Gauge'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
+import { useQuery } from '@tanstack/react-query'
+import { deviceService } from '@/services/device.service'
+import { refillService } from '@/services/refill.service'
 import { mockCylinder, mockRefillPrediction } from '@/utils/mockData'
 import { formatGrams, formatDateTime, getCylinderColor } from '@/utils/cn'
 import { bookingService } from '@/services/booking.service'
@@ -25,6 +28,41 @@ export function Cylinder() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoadingBookings, setIsLoadingBookings] = useState(true)
   const [bookingError, setBookingError] = useState('')
+
+  const { data: devices = [] } = useQuery({
+    queryKey: ['devices'],
+    queryFn: deviceService.getDevices,
+  })
+
+  const activeDevice = devices[0] || null
+
+  const { data: cylinders = [] } = useQuery({
+    queryKey: ['cylinders', activeDevice?.id],
+    queryFn: () => (activeDevice ? deviceService.getCylinders(activeDevice.id) : Promise.resolve([])),
+    enabled: !!activeDevice,
+  })
+
+  const { data: weightReadings = [] } = useQuery({
+    queryKey: ['weightReadings', activeDevice?.id],
+    queryFn: () => (activeDevice ? deviceService.getWeightReadings(activeDevice.id, 1) : Promise.resolve([])),
+    enabled: !!activeDevice,
+  })
+
+  const { data: refillPred } = useQuery({
+    queryKey: ['refillPrediction', activeDevice?.id],
+    queryFn: () => (activeDevice ? refillService.getLatestPrediction(activeDevice.id) : Promise.resolve(null)),
+    enabled: !!activeDevice,
+  })
+
+  const cylinderData = cylinders[0] || mockCylinder
+  const tareWeight = cylinderData.tare_weight_g || 15300
+  const fullWeight = cylinderData.full_weight_g || 29500
+  const netCapacity = fullWeight - tareWeight
+  const latestWeight = weightReadings[0]?.weight_g ?? fullWeight
+  const netRemaining = Math.max(0, latestWeight - tareWeight)
+  const cylinderPercentage = Math.min(100, Math.max(0, Math.round((netRemaining / netCapacity) * 100)))
+
+  const prediction = refillPred || mockRefillPrediction
 
   // Fetch real bookings from backend on mount
   useEffect(() => {
@@ -41,7 +79,7 @@ export function Cylinder() {
 
     try {
       const newBooking = await bookingService.createBooking({
-        device_id: 'DEV-001',
+        device_id: activeDevice?.id || 'SGD-001',
         distributor,
         booking_date: new Date().toISOString(),
         source: 'app',
@@ -59,6 +97,7 @@ export function Cylinder() {
       setIsSubmitting(false)
     }
   }
+
 
   return (
     <div className="space-y-6">
@@ -90,19 +129,19 @@ export function Cylinder() {
           </h3>
 
           <Gauge
-            value={mockCylinder.percentage || 41}
+            value={cylinderPercentage}
             size={200}
             strokeWidth={16}
-            color={getCylinderColor(mockCylinder.percentage || 41)}
-            label={`${mockCylinder.percentage}%`}
-            sublabel={`${formatGrams(mockCylinder.current_weight_g || 22150)} Net Gas`}
+            color={getCylinderColor(cylinderPercentage)}
+            label={`${cylinderPercentage}%`}
+            sublabel={`${formatGrams(netRemaining)} Net Gas`}
           />
 
           <div className="mt-8 grid grid-cols-2 gap-4 w-full text-xs border-t border-slate-100 dark:border-slate-700/60 pt-6">
             <div className="text-left">
               <span className="text-slate-400 block text-[11px]">Installed Date</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
-                {new Date(mockCylinder.install_date).toLocaleDateString('en-IN', {
+                {new Date(cylinderData.install_date).toLocaleDateString('en-IN', {
                   month: 'short',
                   day: 'numeric',
                   year: 'numeric',
@@ -111,7 +150,7 @@ export function Cylinder() {
             </div>
             <div className="text-right">
               <span className="text-slate-400 block text-[11px]">Cylinder Type</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{mockCylinder.cylinder_type} Standard</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{cylinderData.cylinder_type} Standard</span>
             </div>
           </div>
         </Card>
@@ -121,15 +160,15 @@ export function Cylinder() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <StatCard
               title="Estimated Days Remaining"
-              value={`${mockRefillPrediction.days_left} Days`}
-              subtitle={`Predicted Empty: ${new Date(mockRefillPrediction.predicted_empty_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`}
+              value={`${prediction.days_left} Days`}
+              subtitle={`Predicted Empty: ${new Date(prediction.predicted_empty_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`}
               icon={<Clock className="h-5 w-5 text-amber-500" />}
               color="text-amber-500"
             />
 
             <StatCard
               title="Refill Confidence Score"
-              value={`${Math.round(mockRefillPrediction.confidence * 100)}%`}
+              value={`${Math.round(prediction.confidence * 100)}%`}
               subtitle="Weighted moving average forecast"
               icon={<CheckCircle2 className="h-5 w-5 text-primary" />}
               color="text-primary"
@@ -147,26 +186,27 @@ export function Cylinder() {
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Empty Tare Weight</span>
                 <span className="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-1 block">
-                  {formatGrams(mockCylinder.tare_weight_g)}
+                  {formatGrams(tareWeight)}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Current Net Gas</span>
                 <span className="text-base font-extrabold text-amber-500 mt-1 block">
-                  {formatGrams((mockCylinder.current_weight_g || 22150) - mockCylinder.tare_weight_g)}
+                  {formatGrams(netRemaining)}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Full Capacity Gross</span>
                 <span className="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-1 block">
-                  {formatGrams(mockCylinder.full_weight_g)}
+                  {formatGrams(fullWeight)}
                 </span>
               </div>
             </div>
           </Card>
         </div>
+
       </div>
 
       {/* Refill History & Orders */}

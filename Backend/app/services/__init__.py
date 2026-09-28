@@ -1,7 +1,6 @@
 # Services
 from app.services.auth_service import auth_service
 from app.services.jwt_service import create_access_token, decode_access_token
-from app.services.otp_service import send_otp, verify_otp
 from app.services.user_service import user_service
 from app.services.device_service import device_service
 from app.services.telemetry_service import telemetry_service

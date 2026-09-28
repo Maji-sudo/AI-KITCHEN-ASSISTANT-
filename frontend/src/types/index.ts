@@ -5,21 +5,19 @@ export interface AuthTokens {
   token_type: string
 }
 
-export interface OTPRequestPayload { phone: string }
-export interface OTPVerifyPayload  { phone: string; otp: string }
-
 // ─── User ────────────────────────────────────────────────────────────────────
 export interface User {
   id: number
   name: string
-  phone: string
+  phone?: string | null
   email?: string
   language_pref: 'en' | 'hi' | 'ta'
   created_at: string
 }
 
+
 // ─── Device ──────────────────────────────────────────────────────────────────
-export type DeviceStatus = 'active' | 'inactive' | 'offline' | 'error'
+export type DeviceStatus = 'active' | 'inactive' | 'online' | 'offline' | 'error' | 'connected' | 'disconnected' | (string & {})
 
 export interface Device {
   id: string
@@ -45,15 +43,14 @@ export interface Cylinder {
 }
 
 // ─── Telemetry ───────────────────────────────────────────────────────────────
-export type GasStatus = 'normal' | 'warning' | 'critical' | 'safe' | 'danger'
+export type GasStatus = 'safe' | 'warning' | 'danger' | 'critical' | 'normal'
 
 export interface GasReading {
   id: number
   device_id: string
   ppm_value: number
-  status: string
+  status: GasStatus
   timestamp: string
-  source?: string
 }
 
 export interface WeightReading {
@@ -71,90 +68,7 @@ export interface LeakEvent {
   peak_ppm: number
   auto_shutoff_triggered: boolean
   false_alarm: boolean
-  notification_id?: number | null
 }
-
-// ─── Safety & Diagnostics (Phase 7-9) ───────────────────────────────────────
-export interface SafetyStatusResponse {
-  device_id: string
-  latest_gas_ppm?: number | null
-  timestamp?: string | null
-  status?: string | null  // normal | warning | critical
-  valve_status?: string | null // OPEN | CLOSED
-  connection_status?: string | null // online | offline | unknown
-  last_seen?: string | null
-}
-
-export interface ActiveLeakResponse {
-  id: number
-  device_id: string
-  start_time: string
-  end_time?: string | null
-  peak_ppm: number
-  auto_shutoff_triggered?: boolean
-  false_alarm?: boolean
-  notification_id?: number | null
-  active: boolean
-}
-
-export interface LeakHistoryResponse {
-  leaks: ActiveLeakResponse[]
-}
-
-export interface DiagnosticDeviceNode {
-  id: string
-  name: string
-  paired: boolean
-}
-
-export interface DiagnosticConnectionNode {
-  status: string
-  last_seen?: string | null
-}
-
-export interface DiagnosticSensorNode {
-  health: string
-  battery_level?: number | null
-  signal_strength?: number | null
-  last_calibrated_at?: string | null
-}
-
-export interface DiagnosticTelemetryNode {
-  latest_gas_ppm?: number | null
-  timestamp?: string | null
-  source?: string | null
-}
-
-export interface DiagnosticSafetyNode {
-  valve_status: string
-}
-
-export interface DeviceDiagnosticsResponse {
-  device: DiagnosticDeviceNode
-  connection: DiagnosticConnectionNode
-  sensor: DiagnosticSensorNode
-  telemetry: DiagnosticTelemetryNode
-  safety: DiagnosticSafetyNode
-}
-
-export interface SimulatorStartRequest {
-  device_id: string
-  baseline_ppm?: number
-  interval_seconds?: number
-  count?: number
-  mode?: string
-}
-
-export interface SimulatorStatusResponse {
-  device_id: string
-  running: boolean
-  generated_count: number
-  baseline_ppm?: number | null
-  last_ppm?: number | null
-  interval_seconds?: number | null
-  mode?: string | null
-}
-
 
 // ─── Analytics ───────────────────────────────────────────────────────────────
 export type PeriodType = 'daily' | 'weekly' | 'monthly'
@@ -164,11 +78,13 @@ export interface UsageAnalytics {
   device_id: string
   period_type: PeriodType
   period_start: string
-  consumption_g: number
-  avg_rate: number
-  anomaly_flag: boolean
+  consumption_g?: number
+  total_consumption_g?: number
+  avg_rate?: number
+  anomaly_flag?: boolean
   forecast_next_g?: number
 }
+
 
 export interface RefillPrediction {
   id: number

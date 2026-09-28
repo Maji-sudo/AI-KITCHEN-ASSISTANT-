@@ -26,4 +26,8 @@ class DeviceService:
     def add_cylinder(self, db: Session, cylinder_in: CylinderCreate) -> Cylinder:
         return cylinder_repo.create(db, obj_in=cylinder_in)
 
+    def remove_device(self, db: Session, device_id: str) -> Optional[Device]:
+        return device_repo.remove(db, id=device_id)
+
+
 device_service = DeviceService()

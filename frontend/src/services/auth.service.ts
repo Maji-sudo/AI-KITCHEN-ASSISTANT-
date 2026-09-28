@@ -1,37 +1,89 @@
 import apiClient from './apiClient'
-import type { AuthTokens, OTPRequestPayload, OTPVerifyPayload, User } from '@/types'
+import type { User } from '@/types'
+
+export interface RegisterPayload {
+  name: string
+  email: string
+  phone?: string
+  password: string
+}
+
+export interface LoginPayload {
+  email: string
+  password: string
+}
+
+export interface AuthResponse {
+  access_token: string
+  token_type: string
+  user_id: number
+  name: string
+  email: string
+  phone?: string | null
+  is_new_user: boolean
+  user?: User
+}
 
 export const authService = {
-  requestOTP: async (payload: OTPRequestPayload) => {
-    const { data } = await apiClient.post('/auth/request-otp', payload)
+  /**
+   * Register a new user with name, email, optional phone, and password.
+   */
+  register: async (payload: RegisterPayload): Promise<AuthResponse> => {
+    const { data } = await apiClient.post<AuthResponse>('/auth/register', payload)
+
+    localStorage.setItem('access_token', data.access_token)
+    localStorage.setItem('user_id', String(data.user_id))
+    localStorage.setItem('user_name', data.name)
+    localStorage.setItem('user_email', data.email || '')
+    localStorage.setItem('user_phone', data.phone || '')
+
     return data
   },
 
-  verifyOTP: async (payload: OTPVerifyPayload): Promise<AuthTokens & { name: string; user_id: number }> => {
-    const { data } = await apiClient.post('/auth/verify-otp', payload)
-    if (data.access_token) {
-      localStorage.setItem('access_token', data.access_token)
-      // Store user info for quick access
-      localStorage.setItem('user_name', data.name ?? '')
-      localStorage.setItem('user_id', String(data.user_id ?? ''))
-    }
+  /**
+   * Login user with email and password.
+   */
+  login: async (payload: LoginPayload): Promise<AuthResponse> => {
+    const { data } = await apiClient.post<AuthResponse>('/auth/login', payload)
+
+    localStorage.setItem('access_token', data.access_token)
+    localStorage.setItem('user_id', String(data.user_id))
+    localStorage.setItem('user_name', data.name)
+    localStorage.setItem('user_email', data.email || '')
+    localStorage.setItem('user_phone', data.phone || '')
+
     return data
   },
 
+  /**
+   * Update current user mobile number
+   */
+  updatePhone: async (phone: string): Promise<User> => {
+    const { data } = await apiClient.patch<User>('/auth/me', { phone })
+    localStorage.setItem('user_phone', data.phone || '')
+    return data
+  },
+
+  /**
+   * Fetch current user profile using stored JWT
+   */
   getMe: async (): Promise<User> => {
-    // Return from localStorage until a /me endpoint is added
-    return {
-      id: parseInt(localStorage.getItem('user_id') ?? '0'),
-      name: localStorage.getItem('user_name') ?? 'User',
-      phone: '',
-      language_pref: 'en',
-      created_at: new Date().toISOString(),
-    }
+    const { data } = await apiClient.get<User>('/auth/me')
+    localStorage.setItem('user_id', String(data.id))
+    localStorage.setItem('user_name', data.name)
+    localStorage.setItem('user_email', data.email || '')
+    localStorage.setItem('user_phone', data.phone ?? '')
+    return data
   },
 
+  /**
+   * Clear tokens and cached user info
+   */
   logout: () => {
     localStorage.removeItem('access_token')
-    localStorage.removeItem('user_name')
     localStorage.removeItem('user_id')
+    localStorage.removeItem('user_name')
+    localStorage.removeItem('user_email')
+    localStorage.removeItem('user_phone')
   },
 }

@@ -9,11 +9,12 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    phone: Mapped[str] = mapped_column(String(15), unique=True, nullable=False, index=True)
-    email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), unique=True, nullable=True, index=True)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     language_pref: Mapped[str] = mapped_column(String(10), default="en")
     created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), 
+        DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
 

@@ -1,5 +1,4 @@
-# Schemas
-from app.schemas.auth import OTPRequest, OTPVerify, Token, TokenPayload, AuthResponse
+from app.schemas.auth import RegisterRequest, LoginRequest, TokenPayload, AuthResponse
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.schemas.device import DeviceCreate, DeviceUpdate, DeviceResponse, CylinderCreate, CylinderUpdate, CylinderResponse
 from app.schemas.telemetry import GasReadingCreate, GasReadingResponse, WeightReadingCreate, WeightReadingResponse, LeakEventCreate, LeakEventUpdate, LeakEventResponse
