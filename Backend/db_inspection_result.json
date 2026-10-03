@@ -1,0 +1,1757 @@
+{
+  "schemas": [
+    "public"
+  ],
+  "tables": {
+    "public.bookings": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('bookings_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "user_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.users.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "booking_date",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "distributor",
+          "type": "character varying(255)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "status",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "source",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "bookings_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "bookings_user_id_not_null",
+          "check_clause": "user_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "bookings_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "bookings_booking_date_not_null",
+          "check_clause": "booking_date IS NOT NULL"
+        },
+        {
+          "constraint_name": "bookings_distributor_not_null",
+          "check_clause": "distributor IS NOT NULL"
+        },
+        {
+          "constraint_name": "bookings_status_not_null",
+          "check_clause": "status IS NOT NULL"
+        },
+        {
+          "constraint_name": "bookings_source_not_null",
+          "check_clause": "source IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "bookings_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "ix_bookings_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "ix_bookings_user_id",
+          "column_name": "user_id",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ]
+    },
+    "public.cooking_history": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('cooking_history_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "user_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.users.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "dish_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": "public.dish_library.id (ON DELETE SET NULL)"
+        },
+        {
+          "column": "logged_date",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "actual_gas_g",
+          "type": "double precision",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "actual_duration_min",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "cooking_history_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "cooking_history_user_id_not_null",
+          "check_clause": "user_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "cooking_history_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "cooking_history_logged_date_not_null",
+          "check_clause": "logged_date IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "cooking_history_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "ix_cooking_history_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "ix_cooking_history_user_id",
+          "column_name": "user_id",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ]
+    },
+    "public.cylinders": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('cylinders_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "tare_weight_g",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "full_weight_g",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "install_date",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "cylinder_type",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "cylinders_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "cylinders_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "cylinders_tare_weight_g_not_null",
+          "check_clause": "tare_weight_g IS NOT NULL"
+        },
+        {
+          "constraint_name": "cylinders_full_weight_g_not_null",
+          "check_clause": "full_weight_g IS NOT NULL"
+        },
+        {
+          "constraint_name": "cylinders_install_date_not_null",
+          "check_clause": "install_date IS NOT NULL"
+        },
+        {
+          "constraint_name": "cylinders_cylinder_type_not_null",
+          "check_clause": "cylinder_type IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "cylinders_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.device_commands": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('device_commands_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "command",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "status",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "executed_at",
+          "type": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "device_commands_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "device_commands_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "device_commands_command_not_null",
+          "check_clause": "command IS NOT NULL"
+        },
+        {
+          "constraint_name": "device_commands_status_not_null",
+          "check_clause": "status IS NOT NULL"
+        },
+        {
+          "constraint_name": "device_commands_created_at_not_null",
+          "check_clause": "created_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "device_commands_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "ix_device_commands_created_at",
+          "column_name": "created_at",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "ix_device_commands_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ]
+    },
+    "public.devices": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "user_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": "public.users.id (ON DELETE SET NULL)"
+        },
+        {
+          "column": "name",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "firmware_version",
+          "type": "character varying(50)",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "status",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "paired_at",
+          "type": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "valve_status",
+          "type": "character varying(20)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "battery_level",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "signal_strength",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "sensor_health_status",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "last_calibrated_at",
+          "type": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "devices_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "devices_name_not_null",
+          "check_clause": "name IS NOT NULL"
+        },
+        {
+          "constraint_name": "devices_status_not_null",
+          "check_clause": "status IS NOT NULL"
+        },
+        {
+          "constraint_name": "devices_valve_status_not_null",
+          "check_clause": "valve_status IS NOT NULL"
+        },
+        {
+          "constraint_name": "devices_sensor_health_status_not_null",
+          "check_clause": "sensor_health_status IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "devices_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.dish_library": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('dish_library_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "dish_name",
+          "type": "character varying(255)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "cuisine_tag",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "base_gas_g",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "base_duration_min",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "dish_library_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "dish_library_dish_name_not_null",
+          "check_clause": "dish_name IS NOT NULL"
+        },
+        {
+          "constraint_name": "dish_library_cuisine_tag_not_null",
+          "check_clause": "cuisine_tag IS NOT NULL"
+        },
+        {
+          "constraint_name": "dish_library_base_gas_g_not_null",
+          "check_clause": "base_gas_g IS NOT NULL"
+        },
+        {
+          "constraint_name": "dish_library_base_duration_min_not_null",
+          "check_clause": "base_duration_min IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "dish_library_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "ix_dish_library_dish_name",
+          "column_name": "dish_name",
+          "is_unique": true,
+          "is_primary": false
+        }
+      ]
+    },
+    "public.efficiency_scores": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('efficiency_scores_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "period_type",
+          "type": "character varying(20)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "overall_score",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "component_scores_json",
+          "type": "json",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "computed_at",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "efficiency_scores_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "efficiency_scores_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "efficiency_scores_period_type_not_null",
+          "check_clause": "period_type IS NOT NULL"
+        },
+        {
+          "constraint_name": "efficiency_scores_overall_score_not_null",
+          "check_clause": "overall_score IS NOT NULL"
+        },
+        {
+          "constraint_name": "efficiency_scores_computed_at_not_null",
+          "check_clause": "computed_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "efficiency_scores_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "ix_efficiency_scores_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ]
+    },
+    "public.gas_readings": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('gas_readings_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "ppm_value",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "status",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "timestamp",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "source",
+          "type": "character varying(20)",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "gas_readings_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "gas_readings_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "gas_readings_ppm_value_not_null",
+          "check_clause": "ppm_value IS NOT NULL"
+        },
+        {
+          "constraint_name": "gas_readings_status_not_null",
+          "check_clause": "status IS NOT NULL"
+        },
+        {
+          "constraint_name": "gas_readings_timestamp_not_null",
+          "check_clause": "timestamp IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "gas_readings_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "ix_gas_readings_timestamp",
+          "column_name": "timestamp",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ]
+    },
+    "public.leak_events": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('leak_events_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "start_time",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "end_time",
+          "type": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "peak_ppm",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "auto_shutoff_triggered",
+          "type": "boolean",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "false_alarm",
+          "type": "boolean",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "notification_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": "public.notifications.id (ON DELETE NO ACTION)"
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "leak_events_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "leak_events_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "leak_events_start_time_not_null",
+          "check_clause": "start_time IS NOT NULL"
+        },
+        {
+          "constraint_name": "leak_events_peak_ppm_not_null",
+          "check_clause": "peak_ppm IS NOT NULL"
+        },
+        {
+          "constraint_name": "leak_events_auto_shutoff_triggered_not_null",
+          "check_clause": "auto_shutoff_triggered IS NOT NULL"
+        },
+        {
+          "constraint_name": "leak_events_false_alarm_not_null",
+          "check_clause": "false_alarm IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_leak_events_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "leak_events_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.notifications": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('notifications_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "user_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.users.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "channel",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "payload",
+          "type": "json",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "sent_at",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "delivery_status",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "read",
+          "type": "boolean",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "notifications_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "notifications_user_id_not_null",
+          "check_clause": "user_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "notifications_channel_not_null",
+          "check_clause": "channel IS NOT NULL"
+        },
+        {
+          "constraint_name": "notifications_sent_at_not_null",
+          "check_clause": "sent_at IS NOT NULL"
+        },
+        {
+          "constraint_name": "notifications_delivery_status_not_null",
+          "check_clause": "delivery_status IS NOT NULL"
+        },
+        {
+          "constraint_name": "notifications_read_not_null",
+          "check_clause": "read IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_notifications_user_id",
+          "column_name": "user_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "notifications_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.recommendations": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('recommendations_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "user_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.users.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "category",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "message",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "supporting_facts_json",
+          "type": "json",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "confidence",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "status",
+          "type": "character varying(50)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "recommendations_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "recommendations_user_id_not_null",
+          "check_clause": "user_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "recommendations_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "recommendations_category_not_null",
+          "check_clause": "category IS NOT NULL"
+        },
+        {
+          "constraint_name": "recommendations_message_not_null",
+          "check_clause": "message IS NOT NULL"
+        },
+        {
+          "constraint_name": "recommendations_confidence_not_null",
+          "check_clause": "confidence IS NOT NULL"
+        },
+        {
+          "constraint_name": "recommendations_status_not_null",
+          "check_clause": "status IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_recommendations_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "ix_recommendations_user_id",
+          "column_name": "user_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "recommendations_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.refill_predictions": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('refill_predictions_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "predicted_empty_date",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "days_left",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "confidence",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "computed_at",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "refill_predictions_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "refill_predictions_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "refill_predictions_predicted_empty_date_not_null",
+          "check_clause": "predicted_empty_date IS NOT NULL"
+        },
+        {
+          "constraint_name": "refill_predictions_days_left_not_null",
+          "check_clause": "days_left IS NOT NULL"
+        },
+        {
+          "constraint_name": "refill_predictions_confidence_not_null",
+          "check_clause": "confidence IS NOT NULL"
+        },
+        {
+          "constraint_name": "refill_predictions_computed_at_not_null",
+          "check_clause": "computed_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_refill_predictions_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "refill_predictions_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.system_logs": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('system_logs_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "log_level",
+          "type": "character varying(20)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "message",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "system_logs_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "system_logs_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "system_logs_log_level_not_null",
+          "check_clause": "log_level IS NOT NULL"
+        },
+        {
+          "constraint_name": "system_logs_message_not_null",
+          "check_clause": "message IS NOT NULL"
+        },
+        {
+          "constraint_name": "system_logs_created_at_not_null",
+          "check_clause": "created_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_system_logs_created_at",
+          "column_name": "created_at",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "ix_system_logs_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "system_logs_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.usage_analytics": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('usage_analytics_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "period_type",
+          "type": "character varying(20)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "period_start",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "consumption_g",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "avg_rate",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "anomaly_flag",
+          "type": "boolean",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "forecast_next_g",
+          "type": "double precision",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {
+        "uq_usage_analytics_device_period": [
+          "device_id",
+          "period_type",
+          "period_start"
+        ]
+      },
+      "check_constraints": [
+        {
+          "constraint_name": "usage_analytics_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "usage_analytics_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "usage_analytics_period_type_not_null",
+          "check_clause": "period_type IS NOT NULL"
+        },
+        {
+          "constraint_name": "usage_analytics_period_start_not_null",
+          "check_clause": "period_start IS NOT NULL"
+        },
+        {
+          "constraint_name": "usage_analytics_consumption_g_not_null",
+          "check_clause": "consumption_g IS NOT NULL"
+        },
+        {
+          "constraint_name": "usage_analytics_avg_rate_not_null",
+          "check_clause": "avg_rate IS NOT NULL"
+        },
+        {
+          "constraint_name": "usage_analytics_anomaly_flag_not_null",
+          "check_clause": "anomaly_flag IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_usage_analytics_device_id",
+          "column_name": "device_id",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "uq_usage_analytics_device_period",
+          "column_name": "device_id",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "uq_usage_analytics_device_period",
+          "column_name": "period_type",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "uq_usage_analytics_device_period",
+          "column_name": "period_start",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "usage_analytics_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.users": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('users_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "name",
+          "type": "character varying(255)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "email",
+          "type": "character varying(255)",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "phone",
+          "type": "character varying(20)",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "password_hash",
+          "type": "character varying(255)",
+          "nullable": "YES",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "language_pref",
+          "type": "character varying(10)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "users_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "users_name_not_null",
+          "check_clause": "name IS NOT NULL"
+        },
+        {
+          "constraint_name": "users_language_pref_not_null",
+          "check_clause": "language_pref IS NOT NULL"
+        },
+        {
+          "constraint_name": "users_created_at_not_null",
+          "check_clause": "created_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_users_email",
+          "column_name": "email",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "ix_users_phone",
+          "column_name": "phone",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "users_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    },
+    "public.weight_readings": {
+      "columns": [
+        {
+          "column": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('weight_readings_id_seq'::regclass)",
+          "pk": true,
+          "fk": null
+        },
+        {
+          "column": "device_id",
+          "type": "character varying(100)",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": "public.devices.id (ON DELETE CASCADE)"
+        },
+        {
+          "column": "weight_g",
+          "type": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        },
+        {
+          "column": "timestamp",
+          "type": "timestamp with time zone",
+          "nullable": "NO",
+          "default": null,
+          "pk": false,
+          "fk": null
+        }
+      ],
+      "unique_constraints": {},
+      "check_constraints": [
+        {
+          "constraint_name": "weight_readings_id_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "weight_readings_device_id_not_null",
+          "check_clause": "device_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "weight_readings_weight_g_not_null",
+          "check_clause": "weight_g IS NOT NULL"
+        },
+        {
+          "constraint_name": "weight_readings_timestamp_not_null",
+          "check_clause": "timestamp IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ix_weight_readings_timestamp",
+          "column_name": "timestamp",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "weight_readings_pkey",
+          "column_name": "id",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ]
+    }
+  },
+  "views": [],
+  "sequences": [
+    {
+      "sequence_schema": "public",
+      "sequence_name": "bookings_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "cooking_history_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "cylinders_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "device_commands_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "dish_library_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "efficiency_scores_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "gas_readings_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "leak_events_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "notifications_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "recommendations_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "refill_predictions_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "system_logs_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "usage_analytics_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "users_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    },
+    {
+      "sequence_schema": "public",
+      "sequence_name": "weight_readings_id_seq",
+      "data_type": "integer",
+      "start_value": "1",
+      "minimum_value": "1",
+      "maximum_value": "2147483647",
+      "increment": "1"
+    }
+  ],
+  "enums": [],
+  "triggers": [],
+  "functions": [],
+  "alembic_version": [
+    "(alembic_version table not found)"
+  ],
+  "row_counts": {
+    "public.bookings": 0,
+    "public.cooking_history": 33,
+    "public.cylinders": 3,
+    "public.device_commands": 1,
+    "public.devices": 4,
+    "public.dish_library": 5,
+    "public.efficiency_scores": 1,
+    "public.gas_readings": 779,
+    "public.leak_events": 3,
+    "public.notifications": 5,
+    "public.recommendations": 1,
+    "public.refill_predictions": 3,
+    "public.system_logs": 5,
+    "public.usage_analytics": 1,
+    "public.users": 4,
+    "public.weight_readings": 757
+  }
+}

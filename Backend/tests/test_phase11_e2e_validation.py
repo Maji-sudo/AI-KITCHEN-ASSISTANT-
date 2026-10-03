@@ -21,8 +21,8 @@ def test_scenario_a_normal_telemetry():
     """Validate normal gas reading ingestion through canonical pipeline."""
     # 1. Submit normal reading (250 PPM) via manual telemetry endpoint
     res = client.post(
-        "/api/v1/telemetry/manual",
-        json={"device_id": "paired_dev_1", "ppm_value": 250.0},
+        "/api/v1/telemetry/manual/gas",
+        json={"device_id": "paired_dev_1", "ppm_value": 250.0, "source": "MANUAL"},
     )
     assert res.status_code == 201
     reading = res.json()
@@ -50,7 +50,7 @@ def test_scenario_a_normal_telemetry():
 def test_scenario_b_warning_telemetry():
     """Validate warning gas reading (500–999 PPM) does not trigger leak/shutoff."""
     res = client.post(
-        "/api/v1/telemetry/manual",
+        "/api/v1/telemetry/manual/gas",
         json={"device_id": "paired_dev_1", "ppm_value": 750.0},
     )
     assert res.status_code == 201
@@ -75,7 +75,7 @@ def test_scenario_b_warning_telemetry():
 def test_scenario_c_first_critical_reading():
     """Validate first critical reading (≥1000 PPM) triggers complete safety chain."""
     res = client.post(
-        "/api/v1/telemetry/manual",
+        "/api/v1/telemetry/manual/gas",
         json={"device_id": "paired_dev_1", "ppm_value": 1250.0},
     )
     assert res.status_code == 201
@@ -98,7 +98,7 @@ def test_scenario_c_first_critical_reading():
     # 3. Emergency notification created
     res_notif = client.get("/api/v1/notifications/")
     assert res_notif.status_code == 200
-    assert any(n["type"] == "EMERGENCY" for n in res_notif.json())
+    assert any(n["channel"] == "emergency" for n in res_notif.json())
 
 
 # ==============================================================================
@@ -108,7 +108,7 @@ def test_scenario_d_repeated_critical_readings():
     """Validate leak deduplication & peak PPM update on repeated critical readings."""
     # Submit second higher critical reading (1500 PPM)
     res = client.post(
-        "/api/v1/telemetry/manual",
+        "/api/v1/telemetry/manual/gas",
         json={"device_id": "paired_dev_1", "ppm_value": 1500.0},
     )
     assert res.status_code == 201
@@ -126,10 +126,16 @@ def test_scenario_d_repeated_critical_readings():
 # ==============================================================================
 def test_scenario_e_recovery_and_new_leak():
     """Validate auto-resolution upon normal gas drop and creation of new leak on re-spike."""
+    # 0. Create an active leak first (since DB is reset before each test)
+    client.post(
+        "/api/v1/telemetry/manual/gas",
+        json={"device_id": "paired_dev_1", "ppm_value": 1300.0, "source": "MANUAL"},
+    )
+
     # 1. Gas drops back to normal (< 500 PPM)
     res_norm = client.post(
-        "/api/v1/telemetry/manual",
-        json={"device_id": "paired_dev_1", "ppm_value": 200.0},
+        "/api/v1/telemetry/manual/gas",
+        json={"device_id": "paired_dev_1", "ppm_value": 200.0, "source": "MANUAL"},
     )
     assert res_norm.status_code == 201
 
@@ -147,8 +153,8 @@ def test_scenario_e_recovery_and_new_leak():
 
     # 4. Re-spike to critical (1400 PPM) -> New leak event created
     res_crit2 = client.post(
-        "/api/v1/telemetry/manual",
-        json={"device_id": "paired_dev_1", "ppm_value": 1400.0},
+        "/api/v1/telemetry/manual/gas",
+        json={"device_id": "paired_dev_1", "ppm_value": 1400.0, "source": "MANUAL"},
     )
     assert res_crit2.status_code == 201
 
@@ -254,5 +260,5 @@ def test_ownership_and_security():
     assert res_sim_other.status_code == 403
 
     # 5. Manual telemetry ingestion on unpaired device returns 403 Forbidden
-    res_unpaired = client.post("/api/v1/telemetry/manual", json={"device_id": "unpaired_dev_1", "ppm_value": 300.0})
+    res_unpaired = client.post("/api/v1/telemetry/manual/gas", json={"device_id": "unpaired_dev_1", "ppm_value": 300.0})
     assert res_unpaired.status_code == 403

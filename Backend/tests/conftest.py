@@ -66,8 +66,8 @@ def setup_db():
     db: Session = TestingSessionLocal()
 
     # Users
-    user1 = User(id=1, name="User 1", phone="1111111111")
-    user2 = User(id=2, name="User 2", phone="2222222222")
+    user1 = User(id=1, name="User 1", email="user1@safegas.test", phone="1111111111")
+    user2 = User(id=2, name="User 2", email="user2@safegas.test", phone="2222222222")
     db.add_all([user1, user2])
 
     # Devices

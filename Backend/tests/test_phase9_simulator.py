@@ -128,15 +128,30 @@ def test_6_7_8_simulator_generates_telemetry_source_simulator_canonical():
 
 def test_9_generated_readings_appear_in_phase7_read_apis():
     """Generated telemetry appears in Phase 7 safety & leak read APIs."""
+    # Self-sufficient: insert one simulator reading before querying Phase 7 APIs
+    simulator_service.stop_simulation("paired_dev_1")
+    client.post(
+        "/api/v1/simulator/start",
+        json={
+            "device_id": "paired_dev_1",
+            "baseline_ppm": 250.0,
+            "interval_seconds": 0.01,
+            "count": 1,
+        },
+    )
+    time.sleep(0.05)  # allow simulator thread to complete
+
     res_safety = client.get("/api/v1/devices/paired_dev_1/safety")
     assert res_safety.status_code == 200
     safety_data = res_safety.json()
     assert safety_data["device_id"] == "paired_dev_1"
-    assert safety_data["latest_gas_reading"] is not None
+    assert safety_data["latest_gas_ppm"] is not None
 
     res_diag = client.get("/api/v1/devices/paired_dev_1/diagnostics")
     assert res_diag.status_code == 200
-    assert res_diag.json()["device_id"] == "paired_dev_1"
+    assert res_diag.json()["device"]["id"] == "paired_dev_1"
+
+    simulator_service.stop_simulation("paired_dev_1")
 
 
 def test_10_simulator_produces_changing_ppm():
@@ -266,7 +281,7 @@ def test_13_14_simulated_critical_triggers_downstream_safety_logic():
     res_notif = client.get("/api/v1/notifications/")
     assert res_notif.status_code == 200
     notifications = res_notif.json()
-    assert any(n["type"] == "EMERGENCY" for n in notifications)
+    assert any(n["channel"] == "emergency" for n in notifications)
 
 
 def test_15_no_duplicated_safety_logic_in_simulator():

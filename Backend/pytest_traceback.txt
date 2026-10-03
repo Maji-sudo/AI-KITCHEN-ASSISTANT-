@@ -1,0 +1,119 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-9.1.1, pluggy-1.6.0
+rootdir: D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend
+plugins: anyio-4.12.1
+collected 3 items
+
+tests\test_phase8_manual_telemetry.py F..                                [100%]
+
+================================== FAILURES ===================================
+________________________ test_manual_telemetry_success ________________________
+
+    def test_manual_telemetry_success():
+        from tests.conftest import client
+        response = client.post(
+            "/api/v1/telemetry/manual/gas",
+            json={"device_id": "paired_dev_1", "ppm_value": 600},
+        )
+        print(response.json())
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()
+        assert data["device_id"] == "paired_dev_1"
+        assert data["ppm_value"] == 600
+>       assert data["source"] == "MANUAL"
+E       AssertionError: assert 'IOT' == 'MANUAL'
+E         
+E         - MANUAL
+E         + IOT
+
+tests\test_phase8_manual_telemetry.py:14: AssertionError
+---------------------------- Captured stdout call -----------------------------
+{'ppm_value': 600.0, 'mq2_raw': None, 'mq2_ppm': None, 'mq5_raw': None, 'mq5_ppm': None, 'mq9_raw': None, 'mq9_ppm': None, 'status': 'warning', 'timestamp': '2026-10-03T09:25:08.830606', 'source': 'IOT', 'id': 1, 'device_id': 'paired_dev_1'}
+------------------------------ Captured log call ------------------------------
+WARNING  app.services.telemetry_service:telemetry_service.py:77 WARNING gas reading — device=paired_dev_1  ppm=600.0
+WARNING  app.services.notification_service:notification_service.py:74 GAS WARNING — device=paired_dev_1  ppm=600.0  user=1
+============================== warnings summary ===============================
+app\schemas\user.py:25
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\user.py:25: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class UserResponse(UserBase):
+
+app\schemas\device.py:20
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\device.py:20: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class CylinderResponse(CylinderBase):
+
+app\schemas\device.py:48
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\device.py:48: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class DeviceResponse(DeviceBase):
+
+app\schemas\telemetry.py:33
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\telemetry.py:33: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class GasReadingResponse(GasReadingBase):
+
+app\schemas\telemetry.py:48
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\telemetry.py:48: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class WeightReadingResponse(WeightReadingBase):
+
+app\schemas\telemetry.py:73
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\telemetry.py:73: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class LeakEventResponse(LeakEventBase):
+
+app\schemas\cooking.py:15
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\cooking.py:15: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class DishResponse(DishBase):
+
+app\schemas\cooking.py:36
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\cooking.py:36: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class CookingHistoryResponse(CookingHistoryBase):
+
+app\schemas\efficiency.py:15
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\efficiency.py:15: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class EfficiencyScoreResponse(EfficiencyScoreBase):
+
+app\schemas\analytics.py:23
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\analytics.py:23: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class UsageAnalyticsResponse(UsageAnalyticsBase):
+
+app\schemas\notification.py:20
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\notification.py:20: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class NotificationResponse(NotificationBase):
+
+app\schemas\booking.py:19
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\booking.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class BookingResponse(BookingBase):
+
+app\schemas\recommendation.py:19
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\recommendation.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class RecommendationResponse(RecommendationBase):
+
+app\schemas\refill.py:13
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\refill.py:13: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class RefillPredictionResponse(RefillPredictionBase):
+
+app\schemas\system_log.py:12
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\system_log.py:12: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class SystemLogResponse(SystemLogBase):
+
+app\schemas\device_command.py:22
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\device_command.py:22: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class DeviceCommandResponse(DeviceCommandBase):
+
+app\schemas\safety.py:5
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\safety.py:5: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class SafetyStatusResponse(BaseModel):
+
+app\schemas\safety.py:20
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\safety.py:20: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class ActiveLeakResponse(BaseModel):
+
+app\schemas\safety.py:34
+  D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend\app\schemas\safety.py:34: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class LeakHistoryResponse(BaseModel):
+
+tests/test_phase8_manual_telemetry.py::test_manual_telemetry_invalid_payload
+  C:\Users\ragul\AppData\Local\Programs\Python\Python313\Lib\site-packages\_pytest\python.py:167: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    result = testfunction(**testargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_phase8_manual_telemetry.py::test_manual_telemetry_success
+================== 1 failed, 2 passed, 20 warnings in 0.24s ===================

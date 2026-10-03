@@ -200,3 +200,66 @@ export interface PaginatedResponse<T> {
   page: number
   page_size: number
 }
+
+// ─── Safety API Responses ──────────────────────────────────────────────────
+export interface SafetyStatusResponse {
+  device_id: string
+  latest_gas_ppm: number | null
+  status: GasStatus | null
+  valve_status: 'OPEN' | 'CLOSED' | 'unknown'
+  connection_status: 'online' | 'offline' | 'unknown'
+  last_seen: string | null
+}
+
+export interface ActiveLeakResponse {
+  device_id: string
+  start_time: string
+  peak_ppm: number
+  active: boolean
+  end_time: string | null
+}
+
+export interface LeakHistoryResponse {
+  leaks: LeakEvent[]
+}
+
+export interface DeviceDiagnosticsResponse {
+  device: {
+    id: string
+    name: string
+    firmware: string
+    paired: boolean
+  }
+  connection: {
+    status: 'online' | 'offline' | 'unknown'
+    signal_strength: number | null
+    last_seen: string | null
+  }
+  sensor: {
+    health: 'healthy' | 'unknown' | 'degraded' | 'fault'
+    calibration_date: string | null
+    battery_level: number | null
+  }
+  telemetry: {
+    latest_gas_ppm: number | null
+    latest_weight_g: number | null
+  }
+  safety: {
+    valve_status: 'OPEN' | 'CLOSED' | 'unknown'
+    active_leak: boolean
+  }
+}
+
+export interface SimulatorStartRequest {
+  device_id: string
+  scenario?: string
+}
+
+export interface SimulatorStatusResponse {
+  device_id: string
+  running: boolean
+  scenario: string
+  elapsed_seconds: number
+  current_ppm: number
+  current_status: string
+}

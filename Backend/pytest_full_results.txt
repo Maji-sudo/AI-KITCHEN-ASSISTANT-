@@ -1,0 +1,12 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\ragul\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: D:\AI-KITCHEN-ASSISTANT-\AI-KITCHEN-ASSISTANT-\Backend
+plugins: anyio-4.12.1
+collecting ... collected 206 items
+
+tests/test_phase11_e2e_validation.py::test_scenario_a_normal_telemetry FAILED [  0%]
+tests/test_phase11_e2e_validation.py::test_scenario_b_warning_telemetry FAILED [  0%]
+tests/test_phase11_e2e_validation.py::test_scenario_c_first_critical_reading FAILED [  1%]
+tests/test_phase11_e2e_validation.py::test_scenario_d_repeated_critical_readings FAILED [  1%]
+tests/test_phase11_e2e_validation.py::test_scenario_e_recovery_and_new_leak FAILED [  2%]

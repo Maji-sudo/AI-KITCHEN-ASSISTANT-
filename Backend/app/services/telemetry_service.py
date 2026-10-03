@@ -83,6 +83,23 @@ class TelemetryService:
         else:
             self._handle_normal_gas(db, reading_in.device_id)
 
+        # ── Publish real-time safety update ───────────────────────────
+        try:
+            from app.services.safety_read_service import safety_read_service
+            from app.services.realtime_service import realtime_manager
+            
+            user_id = self._get_device_owner_id(db, reading_in.device_id)
+            if user_id:
+                safety_status = safety_read_service.get_current_safety(db, reading_in.device_id, user_id)
+                
+                payload = {
+                    "type": "SAFETY_UPDATE",
+                    "data": safety_status.model_dump(mode='json')
+                }
+                realtime_manager.publish_safety_update(reading_in.device_id, payload)
+        except Exception as e:
+            logger.error("Failed to publish real-time safety update for device %s: %s", reading_in.device_id, e)
+
         return saved_reading
 
     def _handle_critical_gas(

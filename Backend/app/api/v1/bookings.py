@@ -35,7 +35,7 @@ def create_booking(
 @router.patch("/{booking_id}/status", response_model=BookingResponse)
 def update_booking_status(
     booking_id: int,
-    new_status: str,
+    status: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -48,7 +48,7 @@ def update_booking_status(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this booking"
         )
-    result = booking_service.update_booking_status(db, booking_id=booking_id, status=new_status)
+    result = booking_service.update_booking_status(db, booking_id=booking_id, status=status)
     if not result:
         raise HTTPException(status_code=404, detail="Booking not found")
     return result

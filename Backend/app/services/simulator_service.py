@@ -79,10 +79,15 @@ class SimulatorService:
         self._simulators: Dict[str, SimulatorState] = {}
         self._lock = threading.Lock()
 
+    def _is_running_locked(self, device_id: str) -> bool:
+        """Check running state WITHOUT acquiring the lock. Caller must hold self._lock."""
+        sim = self._simulators.get(device_id)
+        return sim.is_running() if sim else False
+
     def is_running(self, device_id: str) -> bool:
+        """Thread-safe public check. Acquires the lock internally."""
         with self._lock:
-            sim = self._simulators.get(device_id)
-            return sim.is_running() if sim else False
+            return self._is_running_locked(device_id)
 
     def start_simulation(
         self,
@@ -97,7 +102,7 @@ class SimulatorService:
         Raises HTTP 409 Conflict if a simulator is already running for device_id.
         """
         with self._lock:
-            if self.is_running(device_id):
+            if self._is_running_locked(device_id):  # uses lock-free helper — lock already held
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"Simulator is already running for device '{device_id}'"

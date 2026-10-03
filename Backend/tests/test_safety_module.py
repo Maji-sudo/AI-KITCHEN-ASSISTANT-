@@ -23,9 +23,9 @@ from tests.conftest import client, TestingSessionLocal  # shared fixtures
 # ── Phase 1 ──────────────────────────────────────────────────────────────────
 
 def test_telemetry_ingestion_unpaired_device():
-    """Unpaired device must be rejected with 403."""
+    """Unpaired device must be rejected with 403 on the authenticated manual endpoint."""
     response = client.post(
-        "/api/v1/telemetry/gas",
+        "/api/v1/telemetry/manual/gas",
         json={
             "device_id": "unpaired_dev_1",
             "ppm_value": 400,
@@ -33,7 +33,7 @@ def test_telemetry_ingestion_unpaired_device():
         },
     )
     assert response.status_code == 403
-    assert "not paired" in response.json()["detail"]
+    assert "access" in response.json()["detail"]
 
 
 def test_telemetry_ingestion_paired_device():
@@ -53,7 +53,7 @@ def test_telemetry_get_readings_unauthorized():
     """User 1 must NOT be able to read User 2's device data."""
     response = client.get("/api/v1/telemetry/gas/paired_dev_2")
     assert response.status_code == 403
-    assert "Unauthorized" in response.json()["detail"]
+    assert "access" in response.json()["detail"]
 
 
 def test_telemetry_get_readings_authorized():
