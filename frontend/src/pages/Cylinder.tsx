@@ -15,7 +15,6 @@ import { Input } from '@/components/ui/Input'
 import { useQuery } from '@tanstack/react-query'
 import { deviceService } from '@/services/device.service'
 import { refillService } from '@/services/refill.service'
-import { mockCylinder, mockRefillPrediction } from '@/utils/mockData'
 import { formatGrams, formatDateTime, getCylinderColor } from '@/utils/cn'
 import { bookingService } from '@/services/booking.service'
 import type { Booking } from '@/types'
@@ -28,6 +27,7 @@ export function Cylinder() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoadingBookings, setIsLoadingBookings] = useState(true)
   const [bookingError, setBookingError] = useState('')
+  const [cancellingBookingId, setCancellingBookingId] = useState<number | null>(null)
 
   const { data: devices = [] } = useQuery({
     queryKey: ['devices'],
@@ -54,7 +54,16 @@ export function Cylinder() {
     enabled: !!activeDevice,
   })
 
-  const cylinderData = cylinders[0] || mockCylinder
+  // Handle loading state
+  if (!activeDevice || !cylinders[0] || !refillPred) {
+    return (
+      <div className="py-12 flex items-center justify-center text-sm text-slate-500 animate-pulse font-medium">
+        Loading cylinder telemetry and predictions from backend...
+      </div>
+    )
+  }
+
+  const cylinderData = cylinders[0]
   const tareWeight = cylinderData.tare_weight_g || 15300
   const fullWeight = cylinderData.full_weight_g || 29500
   const netCapacity = fullWeight - tareWeight
@@ -62,7 +71,7 @@ export function Cylinder() {
   const netRemaining = Math.max(0, latestWeight - tareWeight)
   const cylinderPercentage = Math.min(100, Math.max(0, Math.round((netRemaining / netCapacity) * 100)))
 
-  const prediction = refillPred || mockRefillPrediction
+  const prediction = refillPred
 
   // Fetch real bookings from backend on mount
   useEffect(() => {
@@ -87,14 +96,40 @@ export function Cylinder() {
       // Immediately prepend the new booking to the list
       setBookings((prev) => [newBooking, ...prev])
       setBookingSuccess(true)
-      setTimeout(() => {
-        setBookingSuccess(false)
-        setShowBookingModal(false)
-      }, 2000)
+      
+      // HP Gas Handoff
+      if (distributor === 'HP Gas - Koramangala Agency') {
+        const hpGasNumber = import.meta.env.VITE_HP_GAS_REFILL_NUMBER || '+919493602222'
+        window.open(`tel:${hpGasNumber}`, '_self')
+        // Do not auto-close so the user can read the manual instructions on desktop
+      } else {
+        setTimeout(() => {
+          setBookingSuccess(false)
+          setShowBookingModal(false)
+        }, 2000)
+      }
     } catch {
       setBookingError('Failed to create booking. Please ensure the backend is running.')
     } finally {
       setIsSubmitting(false)
+    }
+  }
+  const handleCancelBooking = async (bookingId: number) => {
+    setCancellingBookingId(bookingId)
+
+    try {
+      const updatedBooking = await bookingService.cancelBooking(bookingId)
+
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === bookingId ? updatedBooking : booking
+        )
+      )
+    } catch (error) {
+      console.error('Failed to cancel booking:', error)
+      setBookingError('Failed to cancel booking. Please try again.')
+    } finally {
+      setCancellingBookingId(null)
     }
   }
 
@@ -261,10 +296,20 @@ export function Cylinder() {
                   </p>
                 </div>
 
-                <div className="text-right">
+                <div className="text-right flex flex-col items-end gap-2">
                   <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                     Source: {b.source.toUpperCase()}
                   </span>
+                  {b.status === 'pending' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCancelBooking(b.id)}
+                      isLoading={cancellingBookingId === b.id}
+                 >
+                      Cancel
+                  </Button>
+                  )}
                 </div>
               </div>
             ))
@@ -287,8 +332,23 @@ export function Cylinder() {
         {bookingSuccess ? (
           <div className="py-8 flex flex-col items-center text-center text-green-600">
             <CheckCircle2 className="h-12 w-12 mb-2 animate-bounce" />
-            <h4 className="text-base font-extrabold">Booking Saved to Database! ✅</h4>
-            <p className="text-xs text-slate-500 mt-1">Your distributor will process your refill order shortly.</p>
+            <h4 className="text-base font-extrabold">
+              {distributor === 'HP Gas - Koramangala Agency' ? 'Booking Initiated! ✅' : 'Booking Saved to Database! ✅'}
+            </h4>
+            {distributor === 'HP Gas - Koramangala Agency' ? (
+              <div className="mt-2 text-xs text-slate-500 space-y-3">
+                <p>Booking initiated. Please complete the HP Gas missed call from your registered mobile number.</p>
+                <p>
+                  <strong>Did the dialer not open?</strong><br />
+                  Call manually: <a href={`tel:${import.meta.env.VITE_HP_GAS_REFILL_NUMBER || '+919493602222'}`} className="text-primary font-bold hover:underline">{import.meta.env.VITE_HP_GAS_REFILL_NUMBER || '+919493602222'}</a>
+                </p>
+                <Button className="mt-4" variant="outline" size="sm" onClick={() => { setBookingSuccess(false); setShowBookingModal(false); }}>
+                  Close
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 mt-1">Your distributor will process your refill order shortly.</p>
+            )}
           </div>
         ) : (
           <form onSubmit={handleBookRefill} className="space-y-4">

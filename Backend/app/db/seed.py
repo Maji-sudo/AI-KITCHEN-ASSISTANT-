@@ -68,7 +68,7 @@ def seed_database():
             cylinder = Cylinder(
                 device_id=device.id,
                 tare_weight_g=15300.0,
-                full_weight_g=14200.0,
+                full_weight_g=29500.0,
                 cylinder_type="14.2kg",
             )
             db.add(cylinder)
