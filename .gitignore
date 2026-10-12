@@ -1,0 +1,13 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Backups and database dumps
+backups/
+*.dump
+*.sql
+
+# Environment and secrets
+.env
+.env.*
+!.env.example

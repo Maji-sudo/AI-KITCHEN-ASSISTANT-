@@ -8,7 +8,7 @@ Create Date: 2026-10-12 16:22:00.000000
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
+from alembic import context, op
 
 
 # revision identifiers, used by Alembic.
@@ -20,6 +20,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add session_token column to cooking_history to support idempotent session deduction."""
+    if context.is_offline_mode():
+        op.add_column(
+            'cooking_history',
+            sa.Column('session_token', sa.String(length=100), nullable=True),
+        )
+        op.create_index(
+            op.f('ix_cooking_history_session_token'),
+            'cooking_history',
+            ['session_token'],
+            unique=True,
+        )
+        return
+
     conn = op.get_bind()
     inspector = sa.inspect(conn)
     columns = [col['name'] for col in inspector.get_columns('cooking_history')]
@@ -40,6 +53,11 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Remove session_token column from cooking_history."""
+    if context.is_offline_mode():
+        op.drop_index(op.f('ix_cooking_history_session_token'), table_name='cooking_history')
+        op.drop_column('cooking_history', 'session_token')
+        return
+
     conn = op.get_bind()
     inspector = sa.inspect(conn)
     indexes = [idx['name'] for idx in inspector.get_indexes('cooking_history')]
