@@ -13,6 +13,13 @@ class Device(Base):
     firmware_version: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="inactive")
     paired_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    
+    # Safety and Diagnostics
+    valve_status: Mapped[str] = mapped_column(String(20), default="OPEN")
+    battery_level: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    signal_strength: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    sensor_health_status: Mapped[str] = mapped_column(String(50), default="healthy")
+    last_calibrated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="devices")

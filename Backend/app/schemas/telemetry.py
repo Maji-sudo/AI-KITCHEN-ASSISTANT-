@@ -1,10 +1,11 @@
 from typing import Optional
-from datetime import datetime
-from pydantic import BaseModel
+from datetime import datetime, timezone
+from pydantic import BaseModel, Field, validator
 
 # --- Gas Reading ---
+
 class GasReadingBase(BaseModel):
-    ppm_value: Optional[float] = 0.0
+    ppm_value: float = ...
     mq2_raw: Optional[float] = None
     mq2_ppm: Optional[float] = None
     mq5_raw: Optional[float] = None
@@ -12,7 +13,10 @@ class GasReadingBase(BaseModel):
     mq9_raw: Optional[float] = None
     mq9_ppm: Optional[float] = None
     status: str = "normal"  # normal | warning | critical
-    timestamp: datetime
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    source: str = "IOT"
+
+
 
     def __init__(self, **data):
         if "ppm_value" not in data or data.get("ppm_value") is None or data.get("ppm_value") == 0:
@@ -24,6 +28,7 @@ class GasReadingBase(BaseModel):
 
 class GasReadingCreate(GasReadingBase):
     device_id: str
+    source: str = "IOT"
 
 class GasReadingResponse(GasReadingBase):
     id: int
@@ -63,6 +68,7 @@ class LeakEventUpdate(BaseModel):
     peak_ppm: Optional[float] = None
     auto_shutoff_triggered: Optional[bool] = None
     false_alarm: Optional[bool] = None
+    notification_id: Optional[int] = None
 
 class LeakEventResponse(LeakEventBase):
     id: int

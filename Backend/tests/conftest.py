@@ -1,13 +1,17 @@
 """
-conftest.py — shared fixtures for API and integration recommendation tests.
-
-Uses SQLite (in-memory) so tests never touch the real PostgreSQL database.
-The app's DATABASE_URL is overridden before any model import.
+Shared pytest fixtures for the SafeGas AI test suite.
+Supports both the safety module tests and the recommendation test suites.
+All tests use SQLite in-memory, isolated from the real PostgreSQL database.
 """
 import os
 import pytest
+from fastapi import Depends
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.pool import StaticPool
 
-# ── Override settings before app modules are imported ────────────────────────
+# ── Force in-memory database and test environment ─────────────────────────────
 os.environ["APP_NAME"] = "SafeGas AI Test"
 os.environ["APP_VERSION"] = "0.0.1-test"
 os.environ["DEBUG"] = "True"
@@ -17,42 +21,106 @@ os.environ["JWT_ALGORITHM"] = "HS256"
 os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "30"
 os.environ["REFRESH_TOKEN_EXPIRE_DAYS"] = "7"
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from fastapi.testclient import TestClient
-
-from app.db.database import Base
+import app.models  # noqa: F401 - ensure all models are registered before create_all
+from app.db.database import Base, get_db
 from app.main import app
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.device import Device
 from app.models.recommendation import Recommendation
 
-# ── In-memory SQLite engine shared across all tests ───────────────────────────
-TEST_ENGINE = create_engine(
-    "sqlite:///:memory:",
+# ── One shared in-memory engine with StaticPool ──────────────────────────────
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=TEST_ENGINE)
+TEST_ENGINE = engine
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestSessionLocal = TestingSessionLocal
+
+assert "sqlite" in str(engine.url), "Safety check failed: engine is not SQLite"
 
 
+# ── App dependency overrides (set once, at import time) ───────────────────────
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def override_get_current_user(db: Session = Depends(get_db)):
+    """Return user-1 for every authenticated endpoint during safety tests."""
+    return db.query(User).filter(User.id == 1).first()
+
+
+app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_current_user] = override_get_current_user
+
+# ── Shared TestClient (imported by safety test modules) ───────────────────────
+client = TestClient(app)
+
+
+# ── Per-test DB setup / teardown for safety tests ─────────────────────────────
+@pytest.fixture(autouse=True)
+def setup_db(request):
+    """
+    Before each safety test:
+      1. Ensure base dependency overrides are active.
+      2. Drop & recreate all tables on the shared in-memory engine.
+      3. Seed safety test users and devices.
+    Skipped for recommendation tests in subdirectories (they manage their own tables/state).
+    """
+    path_str = str(request.node.fspath).replace("\\", "/")
+    if any(sub in path_str for sub in ["tests/api/", "tests/integration/", "tests/unit/"]):
+        yield
+        return
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    db: Session = TestingSessionLocal()
+
+    # Users
+    user1 = User(id=1, name="User 1", email="user1@safegas.test", phone="1111111111")
+    user2 = User(id=2, name="User 2", email="user2@safegas.test", phone="2222222222")
+    db.add_all([user1, user2])
+
+    # Devices
+    db.add_all([
+        Device(id="dev123",         name="Classification Sensor", user_id=1, status="active"),
+        Device(id="paired_dev_1",   name="Kitchen Stove",         user_id=1, status="active"),
+        Device(id="unpaired_dev_1", name="New Stove",             user_id=None, status="inactive"),
+        Device(id="paired_dev_2",   name="Living Room",           user_id=2, status="active"),
+    ])
+
+    db.commit()
+    db.close()
+
+    yield
+
+
+# ── Recommendation suite fixtures ─────────────────────────────────────────────
 @pytest.fixture(scope="session", autouse=True)
 def create_tables():
-    """Create all tables once per test session."""
-    assert "sqlite" in str(TEST_ENGINE.url), "Safety check failed: TEST_ENGINE is not SQLite"
-    from app.db.database import engine as app_engine
-    assert "sqlite" in str(app_engine.url), "Safety check failed: app_engine is not SQLite"
-    Base.metadata.create_all(bind=TEST_ENGINE)
+    """Ensure all tables exist for recommendation tests."""
+    Base.metadata.create_all(bind=engine)
     yield
-    Base.metadata.drop_all(bind=TEST_ENGINE)
 
 
 @pytest.fixture()
 def db():
-    """Provide a clean transactional session per test (rolled back after)."""
-    connection = TEST_ENGINE.connect()
+    """Provide a clean transactional session for recommendation tests."""
+    connection = engine.connect()
     transaction = connection.begin()
-    session = TestSessionLocal(bind=connection)
+    session = TestingSessionLocal(bind=connection)
     yield session
     session.close()
     transaction.rollback()
@@ -61,7 +129,7 @@ def db():
 
 @pytest.fixture()
 def user(db):
-    """Create a test user."""
+    """Create a test user for recommendations."""
     u = User(
         name="Test User",
         email="test@safegas.ai",
@@ -75,7 +143,7 @@ def user(db):
 
 @pytest.fixture()
 def user2(db):
-    """A second user — used to test cross-user access."""
+    """A second user for recommendations."""
     u = User(
         name="Other User",
         email="other@safegas.ai",
@@ -89,7 +157,7 @@ def user2(db):
 
 @pytest.fixture()
 def device(db, user):
-    """Create a test device paired to user."""
+    """Test device paired to user."""
     d = Device(
         id="SGD-TEST-001",
         user_id=user.id,
@@ -103,7 +171,7 @@ def device(db, user):
 
 @pytest.fixture()
 def device2(db, user2):
-    """A device belonging to user2."""
+    """Test device paired to user2."""
     d = Device(
         id="SGD-TEST-002",
         user_id=user2.id,
@@ -113,53 +181,3 @@ def device2(db, user2):
     db.add(d)
     db.flush()
     return d
-
-
-def make_token(user_id: int) -> str:
-    from app.services.jwt_service import create_access_token
-    return create_access_token(user_id)
-
-
-@pytest.fixture()
-def client(db, user, device):
-    """TestClient with DB and auth overrides for user (owner of device)."""
-    def override_db():
-        yield db
-
-    def override_auth():
-        return user
-
-    app.dependency_overrides[get_db] = override_db
-    app.dependency_overrides[get_current_user] = override_auth
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture()
-def client_user2(db, user2, device2):
-    """TestClient authenticated as user2."""
-    def override_db():
-        yield db
-
-    def override_auth():
-        return user2
-
-    app.dependency_overrides[get_db] = override_db
-    app.dependency_overrides[get_current_user] = override_auth
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture()
-def unauthenticated_client(db):
-    """TestClient with DB override but NO auth override."""
-    def override_db():
-        yield db
-
-    app.dependency_overrides[get_db] = override_db
-    # intentionally do NOT override get_current_user
-    with TestClient(app, raise_server_exceptions=False) as c:
-        yield c
-    app.dependency_overrides.clear()

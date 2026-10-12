@@ -51,7 +51,7 @@ class RefillService:
             .all()
         )
         if recent_analytics and len(recent_analytics) > 0:
-            avg_daily_burn = sum(a.total_consumption_g for a in recent_analytics) / len(recent_analytics)
+            avg_daily_burn = sum(a.consumption_g for a in recent_analytics) / len(recent_analytics)
             if avg_daily_burn <= 10:
                 avg_daily_burn = 350.0
             confidence = min(0.96, 0.75 + (len(recent_analytics) * 0.03))

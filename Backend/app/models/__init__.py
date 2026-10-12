@@ -1,6 +1,7 @@
 # Database models (SQLAlchemy, SQLModel, etc.)
 from app.models.user import User
 from app.models.device import Device
+from app.models.device_command import DeviceCommand
 from app.models.booking import Booking
 from app.models.cylinder import Cylinder
 from app.models.cooking_history import CookingHistory
@@ -13,4 +14,4 @@ from app.models.notification import Notification
 from app.models.usage_analytics import UsageAnalytics
 from app.models.refill_prediction import RefillPrediction
 from app.models.efficiency_score import EfficiencyScore
-from app.models.system_log import SystemLog
+from app.models.system_log import SystemLog
