@@ -134,7 +134,23 @@ export interface Recommendation {
   message: string
   supporting_facts_json?: Record<string, unknown>
   confidence: number
+  /** 1=critical | 2=high | 3=medium | 4=low */
+  priority: number
   status: RecommendationStatus
+  created_at?: string
+}
+
+export interface RecommendationCounts {
+  active: number
+  acted: number
+  dismissed: number
+}
+
+export interface GenerateResponse {
+  device_id: string
+  generated: number
+  rules_triggered: string[]
+  message: string
 }
 
 // ─── Efficiency ───────────────────────────────────────────────────────────────

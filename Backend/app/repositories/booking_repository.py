@@ -1,3 +1,4 @@
+﻿from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.models.booking import Booking
 
@@ -12,7 +13,7 @@ class BookingRepository:
         return booking
 
     @staticmethod
-    def get_by_id(db: Session, booking_id: int) -> Booking | None:
+    def get_by_id(db: Session, booking_id: int) -> Optional[Booking]:
         return (
             db.query(Booking)
             .filter(Booking.id == booking_id)
@@ -20,7 +21,7 @@ class BookingRepository:
         )
 
     @staticmethod
-    def get_all(db: Session) -> list[Booking]:
+    def get_all(db: Session) -> List[Booking]:
         return (
             db.query(Booking)
             .order_by(Booking.booking_date.desc())
@@ -32,8 +33,8 @@ class BookingRepository:
         db: Session,
         user_id: int,
         skip: int = 0,
-        limit: int = 50
-    ) -> list[Booking]:
+        limit: int = 50,
+    ) -> List[Booking]:
         return (
             db.query(Booking)
             .filter(Booking.user_id == user_id)
@@ -44,7 +45,7 @@ class BookingRepository:
         )
 
     @staticmethod
-    def get_by_device(db: Session, device_id: str) -> list[Booking]:
+    def get_by_device(db: Session, device_id: str) -> List[Booking]:
         return (
             db.query(Booking)
             .filter(Booking.device_id == device_id)
@@ -56,7 +57,7 @@ class BookingRepository:
     def update_status(
         db: Session,
         booking: Booking,
-        status: str
+        status: str,
     ) -> Booking:
         booking.status = status
         db.commit()

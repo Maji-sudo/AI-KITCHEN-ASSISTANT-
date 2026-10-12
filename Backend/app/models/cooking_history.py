@@ -1,6 +1,6 @@
 import datetime
 from typing import Optional
-from sqlalchemy import ForeignKey, DateTime, Float, Integer
+from sqlalchemy import ForeignKey, DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
@@ -15,6 +15,7 @@ class CookingHistory(Base):
     logged_date: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     actual_gas_g: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     actual_duration_min: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    session_token: Mapped[Optional[str]] = mapped_column(String(100), unique=True, nullable=True, index=True)
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="cooking_history")
