@@ -8,7 +8,7 @@ class BookingBase(BaseModel):
     source: Optional[str] = "app"
 
 class BookingCreate(BookingBase):
-    user_id: int
+    user_id:  Optional[int] = None
     device_id: str
     booking_date: datetime
 

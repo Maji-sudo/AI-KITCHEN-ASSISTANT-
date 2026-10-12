@@ -28,11 +28,18 @@ class BookingRepository:
         )
 
     @staticmethod
-    def get_by_user(db: Session, user_id: int) -> list[Booking]:
+    def get_by_user(
+        db: Session,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 50
+    ) -> list[Booking]:
         return (
             db.query(Booking)
             .filter(Booking.user_id == user_id)
             .order_by(Booking.booking_date.desc())
+            .offset(skip)
+            .limit(limit)
             .all()
         )
 
