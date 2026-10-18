@@ -187,6 +187,20 @@ class SimulatorService:
             sim.stop_requested = True
             return True
 
+    def stop_all(self, timeout: float = 2.0) -> None:
+        """Stop all running simulator background threads and wait for them to finish."""
+        with self._lock:
+            threads = []
+            for sim in list(self._simulators.values()):
+                sim.stop_requested = True
+                if sim.thread and sim.thread.is_alive():
+                    threads.append(sim.thread)
+            self._simulators.clear()
+
+        for t in threads:
+            if t != threading.current_thread():
+                t.join(timeout=timeout)
+
     def get_status(self, device_id: str) -> dict:
         """Return simulator status for device_id."""
         with self._lock:

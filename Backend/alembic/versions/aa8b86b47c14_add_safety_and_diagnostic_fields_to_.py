@@ -26,7 +26,7 @@ def upgrade() -> None:
     op.add_column('devices', sa.Column('signal_strength', sa.Integer(), nullable=True))
     op.add_column('devices', sa.Column('sensor_health_status', sa.String(length=50), server_default='healthy', nullable=False))
     op.add_column('devices', sa.Column('last_calibrated_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('notifications', sa.Column('read', sa.Boolean(), server_default='0', nullable=False))
+    op.add_column('notifications', sa.Column('read', sa.Boolean(), server_default=sa.text('false'), nullable=False))
     # ### end Alembic commands ###
 
 

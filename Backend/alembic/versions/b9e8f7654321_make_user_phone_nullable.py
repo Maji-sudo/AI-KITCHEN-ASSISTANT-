@@ -16,20 +16,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.alter_column(
-        'users',
-        'phone',
-        existing_type=sa.String(length=15),
-        type_=sa.String(length=20),
-        nullable=True,
-    )
+    with op.batch_alter_table('users') as batch_op:
+        batch_op.alter_column(
+            'phone',
+            existing_type=sa.String(length=15),
+            type_=sa.String(length=20),
+            nullable=True,
+        )
 
 
 def downgrade() -> None:
-    op.alter_column(
-        'users',
-        'phone',
-        existing_type=sa.String(length=20),
-        type_=sa.String(length=15),
-        nullable=False,
-    )
+    with op.batch_alter_table('users') as batch_op:
+        batch_op.alter_column(
+            'phone',
+            existing_type=sa.String(length=20),
+            type_=sa.String(length=15),
+            nullable=False,
+        )

@@ -12,7 +12,7 @@ Changes:
 - Note: NULL-email dev users were manually deleted before this migration runs
 """
 from typing import Sequence, Union
-from alembic import op
+from alembic import context, op
 import sqlalchemy as sa
 
 
@@ -24,6 +24,21 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    if context.is_offline_mode():
+        op.drop_index('ix_users_firebase_uid', table_name='users')
+        op.drop_column('users', 'firebase_uid')
+        op.add_column(
+            'users',
+            sa.Column('password_hash', sa.String(length=255), nullable=True)
+        )
+        op.alter_column(
+            'users',
+            'email',
+            existing_type=sa.String(length=255),
+            nullable=False,
+        )
+        return
+
     conn = op.get_bind()
     inspector = sa.inspect(conn)
     columns = [col['name'] for col in inspector.get_columns('users')]
@@ -46,12 +61,12 @@ def upgrade() -> None:
 
     # 4. Enforce email NOT NULL
     #    (All NULL-email rows were manually removed before this migration)
-    op.alter_column(
-        'users',
-        'email',
-        existing_type=sa.String(length=255),
-        nullable=False,
-    )
+    with op.batch_alter_table('users') as batch_op:
+        batch_op.alter_column(
+            'email',
+            existing_type=sa.String(length=255),
+            nullable=False,
+        )
 
     # 5. Ensure email unique index exists (may already exist from initial migration)
     if 'ix_users_email' not in indexes:
@@ -59,18 +74,33 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    if context.is_offline_mode():
+        with op.batch_alter_table('users') as batch_op:
+            batch_op.alter_column(
+                'email',
+                existing_type=sa.String(length=255),
+                nullable=True,
+            )
+        op.drop_column('users', 'password_hash')
+        op.add_column(
+            'users',
+            sa.Column('firebase_uid', sa.String(length=128), nullable=True)
+        )
+        op.create_index('ix_users_firebase_uid', 'users', ['firebase_uid'], unique=True)
+        return
+
     conn = op.get_bind()
     inspector = sa.inspect(conn)
     columns = [col['name'] for col in inspector.get_columns('users')]
     indexes = [idx['name'] for idx in inspector.get_indexes('users')]
 
     # Reverse email NOT NULL
-    op.alter_column(
-        'users',
-        'email',
-        existing_type=sa.String(length=255),
-        nullable=True,
-    )
+    with op.batch_alter_table('users') as batch_op:
+        batch_op.alter_column(
+            'email',
+            existing_type=sa.String(length=255),
+            nullable=True,
+        )
 
     # Drop password_hash
     if 'password_hash' in columns:

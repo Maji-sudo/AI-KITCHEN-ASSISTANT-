@@ -80,6 +80,9 @@ def setup_db(request):
         yield
         return
 
+    from app.services.simulator_service import simulator_service
+    simulator_service.stop_all()
+
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_current_user
 
@@ -105,6 +108,8 @@ def setup_db(request):
     db.close()
 
     yield
+
+    simulator_service.stop_all()
 
 
 # ── Recommendation suite fixtures ─────────────────────────────────────────────
