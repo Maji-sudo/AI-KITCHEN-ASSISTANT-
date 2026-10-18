@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 from sqlalchemy import ForeignKey, DateTime, String, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
@@ -16,7 +17,7 @@ class DeviceCommand(Base):
         default=lambda: datetime.datetime.now(datetime.timezone.utc),
         index=True
     )
-    executed_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True) # for future IoT
+    executed_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(timezone=True), nullable=True) # for future IoT
 
     # Relationships
     device: Mapped["Device"] = relationship("Device")

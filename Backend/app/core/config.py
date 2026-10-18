@@ -1,3 +1,5 @@
+import sys
+from pydantic import ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -68,4 +70,24 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
-settings = Settings()
+try:
+    settings = Settings()
+except ValidationError as exc:
+    missing = [
+        str(err["loc"][0])
+        for err in exc.errors()
+        if err.get("type") == "missing"
+    ]
+    if missing:
+        print(
+            f"\n======================================================================\n"
+            f"[SafeGas AI Startup Error] Missing required environment variable(s):\n"
+            f"  -> {', '.join(missing)}\n\n"
+            f"Please configure them in your Render Dashboard / deployment environment:\n"
+            f"  - DATABASE_URL: PostgreSQL connection string\n"
+            f"  - JWT_SECRET: Minimum 32-character secret key for JWT signing\n"
+            f"======================================================================\n",
+            file=sys.stderr,
+            flush=True,
+        )
+    raise

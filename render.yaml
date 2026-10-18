@@ -6,9 +6,11 @@ services:
     rootDir: Backend
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
       - key: APP_NAME
         value: SafeGas AI API
       - key: APP_VERSION
@@ -32,10 +34,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: BACKEND_CORS_ORIGINS
-        fromService:
-          type: web
-          name: safegas-frontend
-          envVarKey: RENDER_EXTERNAL_URL
+        sync: false
 
   # ── SafeGas AI Frontend Static Site ──────────────────────────────────────────
   - type: web
