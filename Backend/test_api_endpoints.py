@@ -52,9 +52,9 @@ def run_tests():
     print(f"\n1. Root Endpoint: Status {status}")
     print(f"   Response: {data}")
 
-    # 2. Firebase Login Endpoint Check (replaces legacy OTP)
-    status, data = http_post(f"{BASE_URL}/auth/firebase-login", {"id_token": "sample_firebase_id_token"})
-    print(f"\n2. Firebase Login (Invalid Token Check): Status {status}")
+    # 2. Email/Password Login Endpoint Check
+    status, data = http_post(f"{BASE_URL}/auth/login", {"email": "test@example.com", "password": "wrongpassword"})
+    print(f"\n2. Email/Password Login (Invalid Credential Check): Status {status}")
     print(f"   Response: {data}")
     headers = {}
 

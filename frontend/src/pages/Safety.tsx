@@ -29,6 +29,7 @@ import { formatPPM, formatDateTime } from '@/utils/cn'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { deviceService } from '@/services/device.service'
 import { safetyService } from '@/services/safetyService'
+import { API_BASE } from '@/services/apiClient'
 
 export function Safety() {
   const queryClient = useQueryClient()
@@ -99,7 +100,7 @@ export function Safety() {
     if (!activeDevice) return
 
     const token = localStorage.getItem('access_token')
-    const url = `${import.meta.env.VITE_API_URL || '/api/v1'}/devices/${activeDevice.id}/safety/stream?token=${token}`
+    const url = `${API_BASE}/devices/${activeDevice.id}/safety/stream?token=${token}`
     
     const eventSource = new EventSource(url)
 

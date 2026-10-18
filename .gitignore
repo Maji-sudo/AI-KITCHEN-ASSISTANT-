@@ -6,8 +6,31 @@ Thumbs.db
 backups/
 *.dump
 *.sql
+*.db
+*.sqlite
+*.sqlite3
 
 # Environment and secrets
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+firebase_service.json
+*service*.json
+*credentials*.json
+
+# Python & Virtual Environments
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Node & Build artifacts
+node_modules/
+dist/
+dist-ssr/

@@ -4,14 +4,18 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from app.core.config import settings
 
 
-_db_url = make_url(settings.DATABASE_URL)
+raw_url = settings.DATABASE_URL
+if raw_url.startswith("postgres://"):
+    raw_url = raw_url.replace("postgres://", "postgresql://", 1)
+
+_db_url = make_url(raw_url)
 if _db_url.database:
     _clean_db = _db_url.database.strip('"\'')
     _db_url = _db_url.set(database=_clean_db)
 
 engine = create_engine(
     _db_url,
-    echo=True
+    echo=settings.DEBUG
 )
 
 SessionLocal = sessionmaker(

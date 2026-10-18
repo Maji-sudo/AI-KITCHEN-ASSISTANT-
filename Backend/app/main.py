@@ -12,10 +12,13 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend communication
+cors_origins = settings.cors_origins
+allow_credentials = False if "*" in cors_origins else True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
