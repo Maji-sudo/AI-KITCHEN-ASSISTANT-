@@ -122,6 +122,8 @@ def manual_gas_reading(
 ):
     """Manually enter gas telemetry data. Verifies ownership of target device."""
     _assert_device_owner(db, body.device_id, current_user)
+    if body.source == "IOT":
+        body.source = "MANUAL"
     return telemetry_service.record_gas_reading(db, reading_in=body)
 
 

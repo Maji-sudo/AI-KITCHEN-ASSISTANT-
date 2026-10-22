@@ -24,7 +24,7 @@ import { Card, StatCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { gasStatusBadge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { formatPPM, formatDateTime } from '@/utils/cn'
+import { formatPPM, formatDateTime, formatTime } from '@/utils/cn'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { deviceService } from '@/services/device.service'
@@ -120,9 +120,11 @@ export function Safety() {
                 timestamp: payload.data.timestamp || new Date().toISOString(),
                 ppm_value: payload.data.latest_gas_ppm,
                 status: payload.data.status,
+                source: payload.data.source || 'IOT',
               }
               const current = Array.isArray(old) ? old : []
-              const updated = [...current, newReading]
+              const filtered = current.filter((r: any) => r.timestamp !== newReading.timestamp)
+              const updated = [...filtered, newReading]
               if (updated.length > 30) return updated.slice(updated.length - 30)
               return updated
             })
@@ -171,11 +173,13 @@ export function Safety() {
   const ppmValue = safetyStatus?.latest_gas_ppm ?? 0
   const isShutoffActive = safetyStatus?.valve_status === 'CLOSED'
   
-  // Create chart data exactly matching real timestamps
-  const displayReadings = [...gasReadings]
+  // Create chart data sorted chronologically ascending
+  const displayReadings = [...gasReadings].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  )
   const chartData = displayReadings.map((r) => ({
     time: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    ppm: r.ppm_value,
+    ppm: Number(r.ppm_value),
   }))
 
   const displayLeaks = leakHistoryData?.leaks || []
@@ -203,8 +207,18 @@ export function Safety() {
               <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Safety & Gas Leak Monitoring</h2>
               {gasStatusBadge(safetyStatus?.status || 'normal')}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              MQ6 Sensor Live Telemetry &bull; Device: {activeDevice.name}
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
+              <span>MQ6 Sensor Telemetry &bull; Device: <span className="font-mono">{activeDevice.name}</span></span>
+              {safetyStatus?.source && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                  {safetyStatus.source === 'SIMULATOR' ? '🧪 Simulator' : safetyStatus.source === 'MANUAL' ? '✍️ Manual Entry' : '📡 ESP32 Sensor'}
+                </span>
+              )}
+              {safetyStatus?.connection_status === 'offline' && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+                  ⚠️ Telemetry Stale / Offline (Last seen: {safetyStatus.last_seen ? formatTime(safetyStatus.last_seen) : 'unknown'})
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -223,8 +237,12 @@ export function Safety() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           title="Current Gas PPM"
-          value={safetyStatus?.latest_gas_ppm !== null ? formatPPM(safetyStatus!.latest_gas_ppm) : 'N/A'}
-          subtitle="Safe Threshold: < 500 PPM"
+          value={safetyStatus?.latest_gas_ppm !== null && safetyStatus?.latest_gas_ppm !== undefined ? formatPPM(safetyStatus.latest_gas_ppm) : 'No Data'}
+          subtitle={
+            safetyStatus?.connection_status === 'offline'
+              ? `⚠️ Offline (Last: ${safetyStatus.last_seen ? formatTime(safetyStatus.last_seen) : 'Unknown'})`
+              : `Safe Threshold: < 500 PPM • ${safetyStatus?.source === 'SIMULATOR' ? 'Simulator' : safetyStatus?.source === 'MANUAL' ? 'Manual' : 'ESP32'}`
+          }
           icon={<Radio className={`h-5 w-5 ${ppmValue >= 1000 ? 'text-danger animate-ping' : ppmValue >= 500 ? 'text-amber-500 animate-pulse' : 'text-green-500'}`} />}
           color={ppmValue >= 1000 ? 'text-danger' : ppmValue >= 500 ? 'text-amber-500' : 'text-green-500'}
         />
@@ -256,9 +274,15 @@ export function Safety() {
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5">Continuous telemetry sampling</p>
           </div>
-          <span className="text-xs font-bold text-green-500 flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-green-500 animate-ping" /> Live
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400">
+              {safetyStatus?.timestamp ? `Updated ${formatTime(safetyStatus.timestamp)}` : ''}
+            </span>
+            <span className={`text-xs font-bold flex items-center gap-1 ${safetyStatus?.connection_status === 'offline' ? 'text-amber-500' : 'text-green-500'}`}>
+              <span className={`h-2 w-2 rounded-full ${safetyStatus?.connection_status === 'offline' ? 'bg-amber-500' : 'bg-green-500 animate-ping'}`} />
+              {safetyStatus?.connection_status === 'offline' ? 'Offline' : 'Live'}
+            </span>
+          </div>
         </div>
 
         <div className="h-72 w-full pt-2">
@@ -267,14 +291,25 @@ export function Safety() {
               <LineChart data={chartData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
                 <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} domain={[0, 'dataMax + 200']} />
+                <YAxis
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  domain={[0, (dataMax: number) => Math.max(1200, Math.ceil((Number(dataMax) || 0) * 1.15))]}
+                  tickFormatter={(val: number) => `${Math.round(val)}`}
+                />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   formatter={(val: any) => [`${val} PPM`, 'Gas PPM']}
                 />
                 <ReferenceLine y={500} label={{ value: 'Warning (500 PPM)', fill: '#f59e0b', fontSize: 10 }} stroke="#f59e0b" strokeDasharray="4 4" />
                 <ReferenceLine y={1000} label={{ value: 'Critical (1000 PPM)', fill: '#dc2626', fontSize: 10 }} stroke="#dc2626" strokeDasharray="4 4" />
-                <Line type="monotone" dataKey="ppm" stroke="#16a34a" strokeWidth={2.5} dot={false} activeDot={{ r: 6 }} />
+                <Line
+                  type="monotone"
+                  dataKey="ppm"
+                  stroke={ppmValue >= 1000 ? '#dc2626' : ppmValue >= 500 ? '#f59e0b' : '#16a34a'}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           ) : (

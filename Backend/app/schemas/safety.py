@@ -10,6 +10,7 @@ class SafetyStatusResponse(BaseModel):
     valve_status: Optional[str] = None
     connection_status: Optional[str] = None  # online | offline | unknown
     last_seen: Optional[datetime] = None
+    source: Optional[str] = "IOT"
 
     class Config:
         from_attributes = True

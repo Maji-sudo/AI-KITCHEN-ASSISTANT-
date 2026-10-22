@@ -31,7 +31,7 @@ export function formatPPM(ppm: number): string {
 }
 
 export function getPPMStatus(ppm: number): 'safe' | 'warning' | 'danger' {
-  if (ppm < 200) return 'safe'
+  if (ppm < 500) return 'safe'
   if (ppm < 1000) return 'warning'
   return 'danger'
 }

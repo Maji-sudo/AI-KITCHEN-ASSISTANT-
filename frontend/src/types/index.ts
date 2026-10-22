@@ -51,6 +51,7 @@ export interface GasReading {
   ppm_value: number
   status: GasStatus
   timestamp: string
+  source?: string
 }
 
 export interface WeightReading {
@@ -221,10 +222,12 @@ export interface PaginatedResponse<T> {
 export interface SafetyStatusResponse {
   device_id: string
   latest_gas_ppm: number | null
+  timestamp?: string | null
   status: GasStatus | null
   valve_status: 'OPEN' | 'CLOSED' | 'unknown'
   connection_status: 'online' | 'offline' | 'unknown'
   last_seen: string | null
+  source?: string | null
 }
 
 export interface ActiveLeakResponse {

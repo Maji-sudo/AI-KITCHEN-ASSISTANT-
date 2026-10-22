@@ -47,6 +47,7 @@ class SafetyReadService:
             valve_status=device.valve_status,
             connection_status=connection_status,
             last_seen=last_seen,
+            source=latest_reading.source if latest_reading and latest_reading.source else "IOT",
         )
 
     def get_gas_history(
@@ -65,7 +66,8 @@ class SafetyReadService:
             query = query.filter(GasReading.timestamp >= start)
         if end:
             query = query.filter(GasReading.timestamp <= end)
-        return query.order_by(GasReading.timestamp.asc()).limit(limit).all()
+        readings = query.order_by(GasReading.timestamp.desc()).limit(limit).all()
+        return list(reversed(readings))
 
     def get_active_leak(self, db: Session, device_id: str, user_id: int) -> Optional[ActiveLeakResponse]:
         self._get_device(db, device_id, user_id)

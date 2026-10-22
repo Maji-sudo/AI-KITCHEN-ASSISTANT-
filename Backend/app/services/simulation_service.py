@@ -197,7 +197,8 @@ class SimulationService:
                     device_id=device_id,
                     ppm_value=round(random.uniform(178.0, 194.0), 1),
                     status="normal",
-                    timestamp=meal_time + timedelta(minutes=15)
+                    timestamp=meal_time + timedelta(minutes=15),
+                    source="SIMULATOR",
                 )
                 telemetry_service.record_gas_reading(db, reading_in=gas_in)
                 readings_generated += 1
@@ -255,11 +256,11 @@ class SimulationService:
         now = datetime.now(timezone.utc)
 
         if scenario == "warning":
-            ppm_sequence = [220.0, 270.0, 320.0, 350.0]
+            ppm_sequence = [450.0, 550.0, 680.0, 750.0]
         elif scenario == "critical":
-            ppm_sequence = [250.0, 450.0, 700.0, 1050.0]
+            ppm_sequence = [600.0, 850.0, 1050.0, 1100.0]
         else:  # normal
-            ppm_sequence = [180.0, 185.0, 190.0, 187.0]
+            ppm_sequence = [170.0, 185.0, 190.0, 180.0]
 
         recorded_readings = []
         for i, ppm in enumerate(ppm_sequence):
@@ -267,7 +268,8 @@ class SimulationService:
             reading_in = GasReadingCreate(
                 device_id=device_id,
                 ppm_value=ppm,
-                timestamp=reading_time
+                timestamp=reading_time,
+                source="SIMULATOR",
             )
             # telemetry_service auto-classifies status and handles warnings/critical leaks
             saved = telemetry_service.record_gas_reading(db, reading_in=reading_in)
@@ -317,7 +319,8 @@ class SimulationService:
             device_id=device_id,
             ppm_value=180.0,
             status="normal",
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
+            source="SIMULATOR",
         )
         telemetry_service.record_gas_reading(db, reading_in=init_gas)
         refill_service.compute_refill_prediction(db, device_id=device_id)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -28,15 +28,17 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { categoryBadge, gasStatusBadge } from '@/components/ui/Badge'
 import { deviceService } from '@/services/device.service'
+import { safetyService } from '@/services/safetyService'
 import { refillService } from '@/services/refill.service'
 import { simulationService } from '@/services/simulation.service'
 import { analyticsService } from '@/services/analytics.service'
+import { API_BASE } from '@/services/apiClient'
 import {
   mockEfficiencyScore,
   mockRecommendations,
   mockNotifications,
 } from '@/utils/mockData'
-import { formatGrams, formatPPM, getCylinderColor, getScoreColor } from '@/utils/cn'
+import { formatGrams, formatPPM, formatTime, formatDateTime, getCylinderColor, getScoreColor } from '@/utils/cn'
 
 export function Dashboard() {
   const queryClient = useQueryClient()
@@ -64,12 +66,65 @@ export function Dashboard() {
   // Determine active device
   const activeDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0] || null
 
-  // 2. Fetch device telemetry
+  // 2. Fetch canonical safety status (Single source of truth shared with Safety page)
+  const { data: safetyStatus } = useQuery({
+    queryKey: ['safetyStatus', activeDevice?.id],
+    queryFn: () => (activeDevice ? safetyService.getSafetyStatus(activeDevice.id) : Promise.resolve(null)),
+    enabled: !!activeDevice,
+    refetchInterval: 5000,
+  })
+
+  // 3. Fetch device telemetry
   const { data: gasReadings = [] } = useQuery({
     queryKey: ['gasReadings', activeDevice?.id],
     queryFn: () => (activeDevice ? deviceService.getGasReadings(activeDevice.id, 10) : Promise.resolve([])),
     enabled: !!activeDevice,
+    refetchInterval: 5000,
   })
+
+  // Real-time Updates via Server-Sent Events (SSE) synchronized with Safety page
+  useEffect(() => {
+    if (!activeDevice) return
+
+    const token = localStorage.getItem('access_token')
+    const url = `${API_BASE}/devices/${activeDevice.id}/safety/stream?token=${token}`
+    const eventSource = new EventSource(url)
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data)
+        if (payload.type === 'SAFETY_UPDATE') {
+          queryClient.setQueryData(['safetyStatus', activeDevice.id], payload.data)
+          if (payload.data.latest_gas_ppm !== null) {
+            queryClient.setQueryData(['gasReadings', activeDevice.id], (old: any) => {
+              const newReading = {
+                id: Date.now(),
+                device_id: activeDevice.id,
+                timestamp: payload.data.timestamp || new Date().toISOString(),
+                ppm_value: payload.data.latest_gas_ppm,
+                status: payload.data.status,
+                source: payload.data.source || 'IOT',
+              }
+              const current = Array.isArray(old) ? old : []
+              const filtered = current.filter((r: any) => r.timestamp !== newReading.timestamp)
+              const updated = [...filtered, newReading]
+              return updated.length > 30 ? updated.slice(updated.length - 30) : updated
+            })
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse SSE on Dashboard:', err)
+      }
+    }
+
+    eventSource.onerror = () => {
+      eventSource.close()
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [activeDevice, queryClient])
 
   const { data: weightReadings = [] } = useQuery({
     queryKey: ['weightReadings', activeDevice?.id],
@@ -95,10 +150,10 @@ export function Dashboard() {
     enabled: !!activeDevice,
   })
 
-  // Computed metrics
-  const latestGas = gasReadings[0]
-  const currentPPM = latestGas?.ppm_value ?? 180
-  const gasStatus: import('@/types').GasStatus = currentPPM >= 1000 ? 'critical' : currentPPM >= 200 ? 'warning' : 'safe'
+  // Computed metrics — derived from canonical safetyStatus
+  const currentPPM = safetyStatus?.latest_gas_ppm ?? (gasReadings.length > 0 ? gasReadings[gasReadings.length - 1].ppm_value : null)
+  const rawStatus = safetyStatus?.status || (currentPPM !== null ? (currentPPM >= 1000 ? 'critical' : currentPPM >= 500 ? 'warning' : 'safe') : 'safe')
+  const gasStatus: import('@/types').GasStatus = rawStatus as import('@/types').GasStatus
 
   const activeCylinder = cylinders[0]
   const tareWeight = activeCylinder?.tare_weight_g ?? 15300
@@ -316,10 +371,20 @@ export function Dashboard() {
                 ? 'WARNING: Elevated Gas PPM Detected'
                 : 'All Kitchen Systems Operational'}
             </h2>
-            <p className="text-xs text-white/90 mt-0.5">
-              Live PPM: <strong>{formatPPM(currentPPM)}</strong> &bull; Cylinder Level:{' '}
-              <strong>{cylinderPercentage}%</strong> ({daysLeft} days remaining) &bull; Device:{' '}
-              <span className="font-mono">{activeDevice?.name || activeDevice?.id}</span>
+            <p className="text-xs text-white/90 mt-0.5 flex flex-wrap items-center gap-1.5">
+              <span>Live PPM: <strong>{currentPPM !== null ? formatPPM(currentPPM) : 'No Telemetry'}</strong></span>
+              <span>&bull; Cylinder Level: <strong>{cylinderPercentage}%</strong> ({daysLeft} days remaining)</span>
+              <span>&bull; Device: <span className="font-mono">{activeDevice?.name || activeDevice?.id}</span></span>
+              {safetyStatus?.source && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white/20">
+                  {safetyStatus.source === 'SIMULATOR' ? '🧪 Simulator' : safetyStatus.source === 'MANUAL' ? '✍️ Manual' : '📡 ESP32 Sensor'}
+                </span>
+              )}
+              {safetyStatus?.connection_status === 'offline' && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-400/30 text-amber-100">
+                  ⚠️ Telemetry Stale / Offline (Last seen: {safetyStatus.last_seen ? formatTime(safetyStatus.last_seen) : 'unknown'})
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -418,7 +483,7 @@ export function Dashboard() {
             isLoading={isSimulating}
             className="h-7 bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-800/40 text-[11px]"
           >
-            ⚠️ Warning (350 PPM)
+            ⚠️ Warning (750 PPM)
           </Button>
           <Button
             size="sm"
@@ -427,7 +492,7 @@ export function Dashboard() {
             isLoading={isSimulating}
             className="h-7 bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-800/40 text-[11px]"
           >
-            🚨 Critical Leak (1050 PPM)
+            🚨 Critical Leak (1100 PPM)
           </Button>
         </div>
 
@@ -444,9 +509,13 @@ export function Dashboard() {
         <StatCard
           title="Safety Status"
           value={gasStatusBadge(gasStatus)}
-          subtitle={`Gas PPM: ${formatPPM(currentPPM)}`}
-          icon={<ShieldAlert className="h-5 w-5 text-green-600 dark:text-green-400" />}
-          color="text-green-600 dark:text-green-400"
+          subtitle={
+            safetyStatus?.connection_status === 'offline'
+              ? `⚠️ Offline (Last: ${safetyStatus.last_seen ? formatTime(safetyStatus.last_seen) : 'stale'})`
+              : `Gas PPM: ${currentPPM !== null ? formatPPM(currentPPM) : 'No Telemetry'} • ${safetyStatus?.source === 'SIMULATOR' ? 'Simulator' : safetyStatus?.source === 'MANUAL' ? 'Manual' : 'ESP32'}`
+          }
+          icon={<ShieldAlert className={`h-5 w-5 ${gasStatus === 'critical' ? 'text-danger animate-ping' : gasStatus === 'warning' ? 'text-amber-500 animate-pulse' : 'text-green-600 dark:text-green-400'}`} />}
+          color={gasStatus === 'critical' ? 'text-danger' : gasStatus === 'warning' ? 'text-amber-500' : 'text-green-600 dark:text-green-400'}
         />
 
         <StatCard

@@ -27,7 +27,7 @@ export const deviceService = {
   },
 
   getGasReadings: async (deviceId: string, limit = 100): Promise<GasReading[]> => {
-    const { data } = await apiClient.get(`/telemetry/gas/${deviceId}?limit=${limit}`)
+    const { data } = await apiClient.get(`/devices/${deviceId}/gas-readings?limit=${limit}`)
     return data
   },
 
