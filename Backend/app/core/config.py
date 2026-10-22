@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
 
     BACKEND_CORS_ORIGINS: str = (
-        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://safegas-ai.vercel.app"
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://safegas-ai.vercel.app,https://ai-kitchen-assitant.vercel.app"
     )
 
     BACKEND_CORS_ORIGIN_REGEX: str | None = (
