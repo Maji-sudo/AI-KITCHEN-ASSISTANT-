@@ -1,6 +1,6 @@
 import datetime
 from typing import List, Optional
-from sqlalchemy import String, Integer, DateTime
+from sqlalchemy import String, Integer, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
@@ -13,6 +13,9 @@ class User(Base):
     phone: Mapped[Optional[str]] = mapped_column(String(20), unique=True, nullable=True, index=True)
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     language_pref: Mapped[str] = mapped_column(String(10), default="en")
+    delivery_address: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    notification_preferences: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    safety_preferences: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.timezone.utc)

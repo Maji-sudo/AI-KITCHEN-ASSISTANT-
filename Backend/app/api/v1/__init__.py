@@ -13,6 +13,7 @@ from app.api.v1.simulation import router as simulation_router
 from app.api.v1.simulator import router as simulator_router
 from app.api.v1.safety import router as safety_router
 from app.api.v1.gas_agencies import router as gas_agencies_router
+from app.api.v1.settings import router as settings_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)
@@ -29,6 +30,7 @@ api_router.include_router(simulation_router)
 api_router.include_router(simulator_router)
 api_router.include_router(safety_router)
 api_router.include_router(gas_agencies_router)
+api_router.include_router(settings_router)
 
 
 

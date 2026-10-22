@@ -5,7 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Avatar } from '../ui/Avatar'
 import { Breadcrumbs } from './Breadcrumbs'
-import { mockNotifications } from '@/utils/mockData'
+import { useNotifications } from '@/hooks/useNotifications'
 
 interface NavbarProps {
   onOpenMobileSidebar: () => void
@@ -17,7 +17,7 @@ export function Navbar({ onOpenMobileSidebar }: NavbarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifMenu, setShowNotifMenu] = useState(false)
 
-  const unreadCount = mockNotifications.filter((n) => !n.read).length
+  const { notifications, unreadCount } = useNotifications()
 
   return (
     <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
@@ -82,15 +82,27 @@ export function Navbar({ onOpenMobileSidebar }: NavbarProps) {
               </div>
 
               <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1 scrollbar-hide">
-                {mockNotifications.slice(0, 4).map((n) => (
-                  <div
-                    key={n.id}
-                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-xs"
-                  >
-                    <p className="font-semibold text-slate-800 dark:text-slate-100">{n.payload.title}</p>
-                    <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-[11px] line-clamp-2">{n.payload.body}</p>
+                {notifications.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-slate-400">
+                    No notifications yet.
                   </div>
-                ))}
+                ) : (
+                  notifications.slice(0, 4).map((n) => (
+                    <div
+                      key={n.id}
+                      className={`p-2.5 rounded-xl transition-colors text-xs ${
+                        !n.read
+                          ? 'bg-primary/5 dark:bg-primary/10 border-l-2 border-primary'
+                          : 'bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      <p className="font-semibold text-slate-800 dark:text-slate-100">{n.payload?.title || 'Notification'}</p>
+                      <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-[11px] line-clamp-2">
+                        {n.payload?.body || n.payload?.description || n.payload?.message || ''}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

@@ -214,6 +214,7 @@ class TelemetryService:
                 user_id=user_id,
                 device_id=event_in.device_id,
                 ppm_value=event_in.peak_ppm,
+                force=True,
             )
             # link notification to leak event
             leak_event_repo.update(

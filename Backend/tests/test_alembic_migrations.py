@@ -86,7 +86,7 @@ def test_migration_chain_creates_complete_schema_from_empty_db(empty_test_db):
         # Verify alembic_version is at the head revision
         with engine.connect() as conn:
             current_rev = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-            assert current_rev == "20fc3eb6190a", f"Expected head revision 20fc3eb6190a, got {current_rev}"
+            assert current_rev == "31a8f9c02e1b", f"Expected head revision 31a8f9c02e1b, got {current_rev}"
     finally:
         engine.dispose()
 
@@ -174,7 +174,7 @@ def test_offline_sql_generation_for_postgresql():
     assert "CREATE TABLE recommendations" in sql_output
     assert "CREATE TABLE device_commands" in sql_output
     assert "ALTER TABLE notifications ADD COLUMN read BOOLEAN DEFAULT false NOT NULL" in sql_output
-    assert "UPDATE alembic_version SET version_num='20fc3eb6190a'" in sql_output
+    assert "UPDATE alembic_version SET version_num='31a8f9c02e1b'" in sql_output
 
 
 def test_migration_downgrade_and_reupgrade(empty_test_db):

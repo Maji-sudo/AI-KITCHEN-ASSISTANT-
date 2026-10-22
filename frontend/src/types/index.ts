@@ -187,21 +187,83 @@ export interface Booking {
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
-export type NotificationChannel = 'fcm' | 'sms' | 'whatsapp'
+export type NotificationChannel = 'fcm' | 'sms' | 'whatsapp' | 'emergency' | 'safety' | 'refill' | 'system'
 export type DeliveryStatus = 'pending' | 'sent' | 'delivered' | 'failed'
+export type NotificationSeverity = 'critical' | 'warning' | 'reminder' | 'info'
+
+export interface NotificationPayload {
+  title: string
+  body: string
+  description?: string
+  message?: string
+  category?: 'safety' | 'refill' | 'efficiency' | 'cooking' | 'system' | string
+  severity?: NotificationSeverity
+  device_id?: string
+  ppm_value?: number
+  days_left?: number
+  cylinder_pct?: number
+  timestamp?: string
+  [key: string]: any
+}
 
 export interface Notification {
   id: number
   user_id: number
-  channel: NotificationChannel
-  payload: {
-    title: string
-    body: string
-    category?: string
-  }
+  channel: NotificationChannel | string
+  payload: NotificationPayload
   sent_at: string
-  delivery_status: DeliveryStatus
+  delivery_status: DeliveryStatus | string
   read?: boolean
+}
+
+// ─── Settings & Target Delivery Address ─────────────────────────────────────────
+export interface DeliveryAddress {
+  address_line: string
+  area: string
+  city: string
+  state: string
+  pincode: string
+  formatted?: string
+}
+
+export interface NotificationPreferences {
+  fcm_enabled: boolean
+  sms_enabled: boolean
+  whatsapp_enabled: boolean
+  gas_leak_alerts: boolean
+  cylinder_refill_reminders: boolean
+  weekly_efficiency_reports: boolean
+  device_offline_alerts: boolean
+}
+
+export interface SafetyPreferences {
+  emergency_buzzer: boolean
+  auto_shutoff_enabled: boolean
+  leak_sensitivity: 'low' | 'medium' | 'high' | string
+  warning_threshold_ppm: number
+}
+
+export interface DeviceSummary {
+  id: string
+  name: string
+  status: string
+  valve_status?: string
+  battery_level?: number | null
+  signal_strength?: number | null
+}
+
+export interface SettingsData {
+  profile: {
+    id: number
+    name: string
+    email: string
+    phone?: string | null
+    language_pref?: string
+  }
+  delivery_address: DeliveryAddress | null
+  notification_preferences: NotificationPreferences
+  safety_preferences: SafetyPreferences
+  devices: DeviceSummary[]
 }
 
 // ─── API Responses ────────────────────────────────────────────────────────────

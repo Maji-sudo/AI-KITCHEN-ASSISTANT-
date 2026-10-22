@@ -14,26 +14,34 @@ import {
   Radio,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { useNotifications } from '@/hooks/useNotifications'
 
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
 }
 
-const navItems = [
-  { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { name: 'Safety', path: '/safety', icon: ShieldAlert, badge: 'Live', badgeColor: 'bg-red-500' },
-  { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-  { name: 'Cylinder', path: '/cylinder', icon: Flame },
-  { name: 'Cooking Assistant', path: '/cooking', icon: ChefHat, badge: 'AI', badgeColor: 'bg-primary' },
-  { name: 'Recommendations', path: '/recommendations', icon: Sparkles },
-  { name: 'Efficiency', path: '/efficiency', icon: Zap },
-  { name: 'Devices', path: '/devices', icon: Cpu },
-  { name: 'Notifications', path: '/notifications', icon: Bell },
-  { name: 'Settings', path: '/settings', icon: Settings },
-]
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { unreadCount } = useNotifications()
+
+  const navItems = [
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Safety', path: '/safety', icon: ShieldAlert, badge: 'Live', badgeColor: 'bg-red-500' },
+    { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+    { name: 'Cylinder', path: '/cylinder', icon: Flame },
+    { name: 'Cooking Assistant', path: '/cooking', icon: ChefHat, badge: 'AI', badgeColor: 'bg-primary' },
+    { name: 'Recommendations', path: '/recommendations', icon: Sparkles },
+    { name: 'Efficiency', path: '/efficiency', icon: Zap },
+    { name: 'Devices', path: '/devices', icon: Cpu },
+    {
+      name: 'Notifications',
+      path: '/notifications',
+      icon: Bell,
+      badge: unreadCount > 0 ? `${unreadCount}` : undefined,
+      badgeColor: 'bg-danger',
+    },
+    { name: 'Settings', path: '/settings', icon: Settings },
+  ]
   return (
     <>
       {/* Mobile Backdrop */}

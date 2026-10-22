@@ -36,8 +36,8 @@ import { API_BASE } from '@/services/apiClient'
 import {
   mockEfficiencyScore,
   mockRecommendations,
-  mockNotifications,
 } from '@/utils/mockData'
+import { useNotifications } from '@/hooks/useNotifications'
 import { formatGrams, formatPPM, formatTime, formatDateTime, getCylinderColor, getScoreColor } from '@/utils/cn'
 
 export function Dashboard() {
@@ -62,6 +62,9 @@ export function Dashboard() {
     queryKey: ['devices'],
     queryFn: deviceService.getDevices,
   })
+
+  // 1.1 Fetch real notifications
+  const { notifications = [] } = useNotifications()
 
   // Determine active device
   const activeDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0] || null
@@ -717,19 +720,27 @@ export function Dashboard() {
           </div>
 
           <div className="space-y-3">
-            {mockNotifications.slice(0, 3).map((n) => (
-              <div key={n.id} className="flex items-start gap-2.5 text-xs border-b border-slate-100 dark:border-slate-700/50 pb-2.5 last:border-0 last:pb-0">
-                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-100">{n.payload.title}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{n.payload.body}</p>
-                  <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-1">
-                    <Clock className="h-3 w-3" />
-                    {new Date(n.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
+            {notifications.length === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-400">
+                No recent alerts. All systems normal.
               </div>
-            ))}
+            ) : (
+              notifications.slice(0, 3).map((n) => (
+                <div key={n.id} className="flex items-start gap-2.5 text-xs border-b border-slate-100 dark:border-slate-700/50 pb-2.5 last:border-0 last:pb-0">
+                  <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${n.payload?.severity === 'critical' ? 'text-danger' : 'text-amber-500'}`} />
+                  <div>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100">{n.payload?.title || 'Alert'}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                      {n.payload?.body || n.payload?.description || n.payload?.message || ''}
+                    </p>
+                    <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(n.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       </div>

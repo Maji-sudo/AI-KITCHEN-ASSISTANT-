@@ -24,3 +24,7 @@ class NotificationResponse(NotificationBase):
 
     class Config:
         from_attributes = True
+
+
+class UnreadCountResponse(BaseModel):
+    unread_count: int

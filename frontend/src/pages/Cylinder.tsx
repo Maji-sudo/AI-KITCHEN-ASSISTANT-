@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Flame,
   Calendar,
@@ -7,6 +8,8 @@ import {
   Truck,
   Plus,
   MapPin,
+  Settings as SettingsIcon,
+  AlertCircle,
 } from 'lucide-react'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Gauge } from '@/components/ui/Gauge'
@@ -16,6 +19,7 @@ import { Input } from '@/components/ui/Input'
 import { useQuery } from '@tanstack/react-query'
 import { deviceService } from '@/services/device.service'
 import { refillService } from '@/services/refill.service'
+import { settingsService } from '@/services/settings.service'
 import { formatGrams, formatDateTime, getCylinderColor } from '@/utils/cn'
 import { normalizePhoneNumber } from '@/utils/phone'
 import { bookingService } from '@/services/booking.service'
@@ -58,6 +62,13 @@ export function Cylinder() {
     queryFn: () => (activeDevice ? refillService.getLatestPrediction(activeDevice.id) : Promise.resolve(null)),
     enabled: !!activeDevice,
   })
+
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: settingsService.getSettings,
+  })
+
+  const savedTargetAddress = settings?.delivery_address || null
 
   // Fetch real bookings from backend on mount (called unconditionally)
   useEffect(() => {
@@ -410,7 +421,45 @@ export function Cylinder() {
             </div>
 
             <div>
-              <Input label="Target Delivery Address" defaultValue="No 42, 4th Cross, Koramangala, Bengaluru" />
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Target Delivery Address
+              </label>
+              {savedTargetAddress ? (
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {savedTargetAddress.address_line}
+                    </span>
+                    <Link
+                      to="/settings"
+                      className="text-[11px] text-primary font-semibold hover:underline flex items-center gap-1"
+                    >
+                      <SettingsIcon className="h-3 w-3" /> Change in Settings
+                    </Link>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    {savedTargetAddress.area}, {savedTargetAddress.city}, {savedTargetAddress.state} — {savedTargetAddress.pincode}
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-800 dark:text-amber-300 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold">No delivery address saved</p>
+                      <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
+                        Add your delivery address in Settings to use it for cylinder refill booking.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/settings"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors shadow-xs"
+                  >
+                    <SettingsIcon className="h-3.5 w-3.5" /> Open Settings to Add Address
+                  </Link>
+                </div>
+              )}
             </div>
 
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40 text-xs text-slate-500">
