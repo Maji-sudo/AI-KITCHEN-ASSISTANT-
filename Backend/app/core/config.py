@@ -17,6 +17,14 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = ""
 
+    GOOGLE_PLACES_API_KEY: str = ""
+    GOOGLE_MAPS_API_KEY: str = ""
+    GAS_AGENCY_SEARCH_RADIUS_METERS: int = 10000
+
+    @property
+    def places_api_key(self) -> str:
+        return (self.GOOGLE_PLACES_API_KEY or self.GOOGLE_MAPS_API_KEY or "").strip()
+
     SAFEGAS_DEMO_MODE: bool = True
 
     API_PREFIX: str = "/api/v1"

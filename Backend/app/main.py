@@ -32,7 +32,11 @@ app.add_middleware(
     ],
 )
 
+from app.api.v1.gas_agencies import router as gas_agencies_router
+
 app.include_router(api_router, prefix="/api/v1")
+# Backward-compatible direct alias for /api/gas-agencies/nearby
+app.include_router(gas_agencies_router, prefix="/api")
 
 @app.get("/")
 def root():

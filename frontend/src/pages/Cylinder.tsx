@@ -6,6 +6,7 @@ import {
   Clock,
   Truck,
   Plus,
+  MapPin,
 } from 'lucide-react'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Gauge } from '@/components/ui/Gauge'
@@ -17,11 +18,14 @@ import { deviceService } from '@/services/device.service'
 import { refillService } from '@/services/refill.service'
 import { formatGrams, formatDateTime, getCylinderColor } from '@/utils/cn'
 import { bookingService } from '@/services/booking.service'
+import { NearbyGasAgenciesModal } from '@/components/cylinder/NearbyGasAgenciesModal'
 import type { Booking } from '@/types'
 
 export function Cylinder() {
   const [showBookingModal, setShowBookingModal] = useState(false)
+  const [showAgenciesModal, setShowAgenciesModal] = useState(false)
   const [distributor, setDistributor] = useState('HP Gas - Koramangala Agency')
+  const [customAgencyPhone, setCustomAgencyPhone] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingSuccess, setBookingSuccess] = useState(false)
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -54,6 +58,14 @@ export function Cylinder() {
     enabled: !!activeDevice,
   })
 
+  // Fetch real bookings from backend on mount (called unconditionally)
+  useEffect(() => {
+    bookingService.getBookings()
+      .then(setBookings)
+      .catch(() => setBookings([]))
+      .finally(() => setIsLoadingBookings(false))
+  }, [])
+
   // Handle loading state
   if (!activeDevice || !cylinders[0] || !refillPred) {
     return (
@@ -73,14 +85,6 @@ export function Cylinder() {
 
   const prediction = refillPred
 
-  // Fetch real bookings from backend on mount
-  useEffect(() => {
-    bookingService.getBookings()
-      .then(setBookings)
-      .catch(() => setBookings([]))
-      .finally(() => setIsLoadingBookings(false))
-  }, [])
-
   const handleBookRefill = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -97,11 +101,12 @@ export function Cylinder() {
       setBookings((prev) => [newBooking, ...prev])
       setBookingSuccess(true)
       
-      // HP Gas Handoff
+      // HP Gas or Selected Agency Phone Handoff
       if (distributor === 'HP Gas - Koramangala Agency') {
         const hpGasNumber = import.meta.env.VITE_HP_GAS_REFILL_NUMBER || '+919493602222'
         window.open(`tel:${hpGasNumber}`, '_self')
-        // Do not auto-close so the user can read the manual instructions on desktop
+      } else if (customAgencyPhone) {
+        window.open(`tel:${customAgencyPhone.replace(/[^\d+]/g, '')}`, '_self')
       } else {
         setTimeout(() => {
           setBookingSuccess(false)
@@ -114,6 +119,7 @@ export function Cylinder() {
       setIsSubmitting(false)
     }
   }
+
   const handleCancelBooking = async (bookingId: number) => {
     setCancellingBookingId(bookingId)
 
@@ -133,7 +139,6 @@ export function Cylinder() {
     }
   }
 
-
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -150,9 +155,22 @@ export function Cylinder() {
           </div>
         </div>
 
-        <Button onClick={() => setShowBookingModal(true)} leftIcon={<Truck className="h-4 w-4" />}>
-          Book Cylinder Refill
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => setShowAgenciesModal(true)}
+            leftIcon={<MapPin className="h-4 w-4 text-primary" />}
+          >
+            Find Nearby Gas Agencies
+          </Button>
+
+          <Button
+            onClick={() => setShowBookingModal(true)}
+            leftIcon={<Truck className="h-4 w-4" />}
+          >
+            Book Cylinder Refill
+          </Button>
+        </div>
       </div>
 
       {/* Grid Overview Cards */}
@@ -353,14 +371,31 @@ export function Cylinder() {
         ) : (
           <form onSubmit={handleBookRefill} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                LPG Distributor Agency
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  LPG Distributor Agency
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBookingModal(false)
+                    setShowAgenciesModal(true)
+                  }}
+                  className="text-xs text-primary font-bold hover:underline flex items-center gap-1"
+                >
+                  <MapPin className="h-3 w-3" /> Find Nearby
+                </button>
+              </div>
+
               <select
                 value={distributor}
                 onChange={(e) => setDistributor(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3.5 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
               >
+                {distributor &&
+                  !['HP Gas - Koramangala Agency', 'Indane Gas - Indiranagar', 'Bharatgas - HSR Layout'].includes(distributor) && (
+                    <option value={distributor}>{distributor} (Nearby)</option>
+                  )}
                 <option value="HP Gas - Koramangala Agency">HP Gas - Koramangala Agency</option>
                 <option value="Indane Gas - Indiranagar">Indane Gas - Indiranagar</option>
                 <option value="Bharatgas - HSR Layout">Bharatgas - HSR Layout</option>
@@ -390,6 +425,18 @@ export function Cylinder() {
           </form>
         )}
       </Modal>
+
+      {/* Nearby Gas Agencies Finder Modal */}
+      <NearbyGasAgenciesModal
+        isOpen={showAgenciesModal}
+        onClose={() => setShowAgenciesModal(false)}
+        onSelectAgencyForBooking={(agencyName, phone) => {
+          setDistributor(agencyName)
+          setCustomAgencyPhone(phone || null)
+          setShowBookingModal(true)
+        }}
+      />
     </div>
   )
 }
+

@@ -279,3 +279,30 @@ export interface SimulatorStatusResponse {
   current_ppm: number
   current_status: string
 }
+
+// ─── Gas Agencies (Nearby Finder) ───────────────────────────────────────────
+export interface GasAgency {
+  id: string
+  name: string
+  address: string
+  latitude: number
+  longitude: number
+  distance_km: number
+  phone_number?: string | null
+  google_maps_url: string
+  rating?: number | null
+  user_ratings_total?: number | null
+}
+
+export interface GasAgenciesResponse {
+  success: boolean
+  count: number
+  radius_meters: number
+  user_location?: {
+    latitude: number
+    longitude: number
+  } | null
+  agencies: GasAgency[]
+  message?: string | null
+}
+
