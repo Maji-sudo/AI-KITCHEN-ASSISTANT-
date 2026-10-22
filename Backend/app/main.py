@@ -13,14 +13,23 @@ app = FastAPI(
 
 # CORS middleware for frontend communication
 cors_origins = settings.cors_origins
+cors_origin_regex = settings.cors_origin_regex
 allow_credentials = False if "*" in cors_origins else True
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
+    allow_origin_regex=cors_origin_regex,
     allow_credentials=allow_credentials,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+        "*",
+    ],
 )
 
 app.include_router(api_router, prefix="/api/v1")

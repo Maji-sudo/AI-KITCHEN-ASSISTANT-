@@ -22,8 +22,19 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
 
     BACKEND_CORS_ORIGINS: str = (
-        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://safegas-ai.vercel.app"
     )
+
+    BACKEND_CORS_ORIGIN_REGEX: str | None = (
+        r"^https:\/\/(safegas-ai.*\.vercel\.app|.*\.vercel\.app)$"
+    )
+
+    @property
+    def cors_origin_regex(self) -> str | None:
+        if self.BACKEND_CORS_ORIGIN_REGEX:
+            trimmed = self.BACKEND_CORS_ORIGIN_REGEX.strip()
+            return trimmed if trimmed else None
+        return None
 
     @property
     def cors_origins(self) -> list[str]:

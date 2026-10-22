@@ -106,3 +106,55 @@ def test_development_cors_allows_localhost_and_wildcard():
         _env_file=None,
     )
     assert s.cors_origins == ["*"]
+
+
+def test_cors_preflight_production_vercel_origin():
+    """Verify preflight OPTIONS request from production Vercel origin succeeds with 200 and required CORS headers."""
+    client = TestClient(app)
+    response = client.options(
+        "/api/v1/auth/login",
+        headers={
+            "Origin": "https://safegas-ai.vercel.app",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization, content-type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://safegas-ai.vercel.app"
+    methods = response.headers.get("access-control-allow-methods", "")
+    assert "POST" in methods
+    assert "OPTIONS" in methods
+    allow_headers = response.headers.get("access-control-allow-headers", "").lower()
+    assert "authorization" in allow_headers
+    assert "content-type" in allow_headers
+
+
+def test_cors_preflight_vercel_preview_origin():
+    """Verify preflight OPTIONS request from a Vercel preview deployment URL matches regex and succeeds."""
+    client = TestClient(app)
+    response = client.options(
+        "/api/v1/auth/login",
+        headers={
+            "Origin": "https://safegas-ai-git-fix-cors-team.vercel.app",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization, content-type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://safegas-ai-git-fix-cors-team.vercel.app"
+
+
+def test_cors_preflight_disallowed_origin():
+    """Verify preflight OPTIONS request from an untrusted origin is rejected with 400."""
+    client = TestClient(app)
+    response = client.options(
+        "/api/v1/auth/login",
+        headers={
+            "Origin": "https://malicious-site.example.com",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization, content-type",
+        },
+    )
+    assert response.status_code == 400
+    assert "access-control-allow-origin" not in response.headers
+

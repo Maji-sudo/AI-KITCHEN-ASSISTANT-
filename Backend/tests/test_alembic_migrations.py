@@ -200,6 +200,8 @@ def test_migration_downgrade_and_reupgrade(empty_test_db):
 
 def test_live_postgresql_migration_on_disposable_database():
     """Verify that alembic upgrade head executes on an actual PostgreSQL instance if locally available."""
+    host = "localhost"
+    port = 5432
     try:
         import psycopg
         pg_url = os.getenv("PG_DATABASE_URL")
