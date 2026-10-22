@@ -15,6 +15,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { gasAgencyService } from '@/services/gasAgency.service'
+import { normalizePhoneNumber } from '@/utils/phone'
 import type { GasAgency } from '@/types'
 
 interface NearbyGasAgenciesModalProps {
@@ -44,15 +45,15 @@ export function NearbyGasAgenciesModal({
   const [radiusMeters, setRadiusMeters] = useState(10000)
   const [manualQuery, setManualQuery] = useState('')
   const [isSearchingManual, setIsSearchingManual] = useState(false)
-  const [callConfirmationAgency, setCallConfirmationAgency] = useState<GasAgency | null>(null)
+  const [phoneAlert, setPhoneAlert] = useState<{ agencyId: string; message: string } | null>(null)
 
   // Start location flow whenever the modal opens
   useEffect(() => {
     if (isOpen) {
       handleRequestLocation()
+      setPhoneAlert(null)
     } else {
-      // Reset temporary states on close
-      setCallConfirmationAgency(null)
+      setPhoneAlert(null)
     }
   }, [isOpen])
 
@@ -152,11 +153,24 @@ export function NearbyGasAgenciesModal({
     return `${km.toFixed(1)} km away`
   }
 
-  const getCleanPhoneUri = (phone?: string | null) => {
-    if (!phone) return ''
-    // Remove non-numeric characters except leading +
-    const clean = phone.replace(/[^\d+]/g, '')
-    return `tel:${clean}`
+  const handleBookCylinderRefill = (agency: GasAgency) => {
+    setPhoneAlert(null)
+    const normalized = normalizePhoneNumber(agency.phone_number)
+
+    if (!normalized) {
+      setPhoneAlert({
+        agencyId: agency.id,
+        message: 'Phone number unavailable for this agency.',
+      })
+      return
+    }
+
+    if (onSelectAgencyForBooking) {
+      onSelectAgencyForBooking(agency.name, normalized)
+    }
+
+    // Immediately open device phone dialler with the validated phone number prefilled
+    window.location.href = `tel:${encodeURIComponent(normalized)}`
   }
 
   const getGoogleMapsSearchUrl = () => {
@@ -379,6 +393,14 @@ export function NearbyGasAgenciesModal({
                     </div>
                   </div>
 
+                  {/* Phone Unavailable Alert for this agency */}
+                  {phoneAlert?.agencyId === agency.id && (
+                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2 animate-fadeIn">
+                      <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                      <span>{phoneAlert.message}</span>
+                    </div>
+                  )}
+
                   {/* Phone number and Action Buttons */}
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-1.5">
@@ -395,27 +417,16 @@ export function NearbyGasAgenciesModal({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* Call Agency Button with tel: confirmation modal */}
-                      {agency.phone_number ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setCallConfirmationAgency(agency)}
-                          leftIcon={<PhoneCall className="h-3.5 w-3.5 text-green-600" />}
-                          className="text-xs text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50 hover:bg-green-50 dark:hover:bg-green-950/30"
-                        >
-                          Call Agency
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled
-                          className="text-xs opacity-50 cursor-not-allowed"
-                        >
-                          No Phone
-                        </Button>
-                      )}
+                      {/* Book Cylinder Refill button — immediately opens phone dialler */}
+                      <Button
+                        size="sm"
+                        onClick={() => handleBookCylinderRefill(agency)}
+                        leftIcon={<PhoneCall className="h-3.5 w-3.5 text-white" />}
+                        className="text-xs font-bold bg-primary hover:bg-primary-dark text-white shadow-xs"
+                        title={agency.phone_number ? `Open phone dialler with ${agency.phone_number}` : 'Phone number unavailable'}
+                      >
+                        Book Cylinder Refill
+                      </Button>
 
                       {/* Get Directions Button */}
                       <a
@@ -432,6 +443,7 @@ export function NearbyGasAgenciesModal({
                       {onSelectAgencyForBooking && (
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() => {
                             onSelectAgencyForBooking(agency.name, agency.phone_number)
                             onClose()
@@ -450,42 +462,6 @@ export function NearbyGasAgenciesModal({
           )}
         </div>
       </Modal>
-
-      {/* Explicit Call Confirmation Modal — Prevents accidental dials and displays the prefilled dialler link */}
-      {callConfirmationAgency && (
-        <Modal
-          isOpen={!!callConfirmationAgency}
-          onClose={() => setCallConfirmationAgency(null)}
-          title="Call Gas Agency"
-          description={`Open device phone dialler to call ${callConfirmationAgency.name}?`}
-        >
-          <div className="space-y-4 py-2">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center space-y-1">
-              <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Distributor Phone</span>
-              <p className="text-lg font-black text-slate-900 dark:text-white">
-                {callConfirmationAgency.phone_number}
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                This will open your phone dialler with the number prefilled. No call is placed automatically.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => setCallConfirmationAgency(null)}>
-                Cancel
-              </Button>
-              <a
-                href={getCleanPhoneUri(callConfirmationAgency.phone_number)}
-                onClick={() => setCallConfirmationAgency(null)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm"
-              >
-                <Phone className="h-4 w-4" />
-                Open Phone Dialler
-              </a>
-            </div>
-          </div>
-        </Modal>
-      )}
     </>
   )
 }

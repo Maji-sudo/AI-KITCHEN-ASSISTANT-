@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query'
 import { deviceService } from '@/services/device.service'
 import { refillService } from '@/services/refill.service'
 import { formatGrams, formatDateTime, getCylinderColor } from '@/utils/cn'
+import { normalizePhoneNumber } from '@/utils/phone'
 import { bookingService } from '@/services/booking.service'
 import { NearbyGasAgenciesModal } from '@/components/cylinder/NearbyGasAgenciesModal'
 import type { Booking } from '@/types'
@@ -101,12 +102,18 @@ export function Cylinder() {
       setBookings((prev) => [newBooking, ...prev])
       setBookingSuccess(true)
       
-      // HP Gas or Selected Agency Phone Handoff
+      // HP Gas or Selected Agency Phone Handoff via tel: dialler
       if (distributor === 'HP Gas - Koramangala Agency') {
         const hpGasNumber = import.meta.env.VITE_HP_GAS_REFILL_NUMBER || '+919493602222'
-        window.open(`tel:${hpGasNumber}`, '_self')
+        const normalized = normalizePhoneNumber(hpGasNumber)
+        if (normalized) {
+          window.location.href = `tel:${encodeURIComponent(normalized)}`
+        }
       } else if (customAgencyPhone) {
-        window.open(`tel:${customAgencyPhone.replace(/[^\d+]/g, '')}`, '_self')
+        const normalized = normalizePhoneNumber(customAgencyPhone)
+        if (normalized) {
+          window.location.href = `tel:${encodeURIComponent(normalized)}`
+        }
       } else {
         setTimeout(() => {
           setBookingSuccess(false)
